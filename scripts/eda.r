@@ -1,9 +1,12 @@
 # EDA for statistical learning project------------
 # Import data------------------
 library(readxl)
+library(dplyr)
+library(car)
+library(lmtest)
 
-
-data <- read_excel("../data/data.xlsx",sheet = "dataframe_col")
+# change here for current data path
+data <- read_excel("C:/Users/danie/Documents/GitHub/unipd_sl_24/data/data.xlsx",sheet = "dataframe_col")
 View(data)
 
 # view data types---------------
@@ -44,8 +47,43 @@ View(data_reduced)
 
 # Outliers---------------
 
+# see outliers based on z scores
+
+df_with_z_scores <- data_reduced %>%
+  mutate(across(where(is.numeric), ~ scale(.), .names = "z_{col}"))
+
+# Identify outliers
+outlier_threshold <- 3
+df_with_outliers <- df_with_z_scores %>%
+  mutate(across(starts_with("z_"), ~ abs(.) > outlier_threshold, .names = "outlier_{col}"))
+
+# Print data frame with Z-scores and outliers identified
+df_with_outliers
+
+outlier_counts <- df_with_outliers %>%
+  summarise(across(starts_with("outlier_"), ~ sum(. == TRUE), .names = "count_{col}"))
+
+# Print the counts
+outlier_counts
+
+# print the row that has outliers
+# Filter the data frame where "outlier_z_energy" is TRUE
+filtered_df <- df_with_outliers %>%
+  filter(outlier_z_energy == TRUE)
+
+head(filtered_df)
+
+# Filter original df to see when it was
+filtered_df_og <- clean_data %>%
+  filter(energy > 370)
+
+filtered_df_og
+
+# It was aug 2022, peak inflation wave, war on Ukraine and,
+#preocupation of winter in Europe, makes sense to leave it
+
 # Create a pairs plot excluding columns C and D
-pairs(data_reduced)
+# pairs(data_reduced) # does not say much
 
 
 # Basic boxplot for multiple columns
@@ -104,7 +142,7 @@ print(cor_matrix)
 heatmap(cor_matrix, symm = TRUE)
 
 # Variable Transformations----------------
-library(dplyr) # Check if can use
+
 
 # Create new log-transformed variables
 data_reduced <- data_reduced %>%
@@ -119,8 +157,6 @@ data_final <- data_reduced %>%
          construction_licences_area_log, google_trends_log,
          unemployment, interest_rate)
 # Multicolinearity Check--------------------
-install.packages("car")
-library(car)
 
 # here a value bigger than 10 is supposed to have high multicolinearity 
 vif(lm(y_log ~ ., data = data_final))
@@ -186,8 +222,8 @@ plot(fitted(model), residuals(model), main="Residuals vs Fitted")
 abline(h=0, col="red")
 
 # Breusch-Pagan Test
-install.packages("lmtest")
-library(lmtest)
+
+
 bptest(model)
 # P value < 0.05 -> There is Heteroskedasticiy
 
