@@ -1,5 +1,12 @@
 # EDA for statistical learning project------------
+
+# remove everything from memory
+
+rm(list = ls())
+
 # Import data------------------
+
+
 library(readxl)
 library(dplyr)
 library(car)
@@ -69,23 +76,33 @@ outlier_counts
 # print the row that has outliers
 # Filter the data frame where "outlier_z_energy" is TRUE
 filtered_df <- df_with_outliers %>%
-  filter(outlier_z_energy == TRUE)
+  filter(outlier_z_energy == TRUE | outlier_z_shipping == TRUE)
 
 head(filtered_df)
 
 # Filter original df to see when it was
-filtered_df_og <- clean_data %>%
+filtered_df_energy <- clean_data %>%
   filter(energy > 370)
 
-filtered_df_og
+filtered_df_energy
 
-# It was aug 2022, peak inflation wave, war on Ukraine and,
+# see high values of shipping when happend
+filtered_df_shipping <- clean_data %>%
+  filter(shipping > 468)
+
+filtered_df_shipping
+
+# It was aug 2022-dec 2022, peak inflation wave, war on Ukraine and,
 #preocupation of winter in Europe, makes sense to leave it
 
 # Create a pairs plot excluding columns C and D
 # pairs(data_reduced) # does not say much
 
 
+# reset margins
+par(mfrow = c(1, 1))
+
+# DO THIS AFTER LOG TRANS
 # Basic boxplot for multiple columns
 # Setting up the plotting area
 par(mfrow = c(1, ncol(data_reduced)))  # Arrange plots in 1 row and as many columns as variables
@@ -122,8 +139,13 @@ cov_matrix
 correl_matrix <- cor(data_reduced)
 correl_matrix
 
+# Easy way
+install.packages("corrplot")
+library(corrplot)
 
+corrplot(correl_matrix)
 
+# but there is the base implementation
 # Heatmap using base R
 image(1:ncol(correl_matrix), 1:ncol(correl_matrix), correl_matrix,
       main = "Correlation Matrix Heatmap",
@@ -140,6 +162,15 @@ print(cor_matrix)
 
 # Visualize the correlation matrix
 heatmap(cor_matrix, symm = TRUE)
+
+
+# Look at target and relationship between target and covariates
+
+# histogram
+hist(data_reduced$y)
+
+# boxplot
+
 
 # Variable Transformations----------------
 
