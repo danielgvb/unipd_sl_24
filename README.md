@@ -1,2 +1,2 @@
 # unipd_sl_24
-Statistical Learning Project at UniPD Msc Data Science 2024 for new cars price inflation determinants
+Statistical Learning Project at UniPD Msc Data Science 2024 for home price inflation determinants in Colombia
