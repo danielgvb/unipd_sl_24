@@ -22,6 +22,7 @@ str(data)
 
 # all variables that are not datetype are numerical
 
+
 # Clean data-------------------
 # Counting NA values in each column
 na_counts <- apply(data, 2, function(x) sum(is.na(x)))
@@ -98,21 +99,79 @@ filtered_df_shipping
 # Create a pairs plot excluding columns C and D
 # pairs(data_reduced) # does not say much
 
+# Variable Transformations----------------
 
+
+# Create Differences (Inflation)
+# Assuming your dataframe is named 'data'
+colnames(data)
+
+# Select subset of variables you want to difference
+variables_to_calculate <- c("y", "industrial_inputs", "metals",
+                            "energy", "shipping", "fx", "industrial_prod",
+                            "construction_licences_area", "google_trends")
+
+
+# Create a function to calculate the 12-month percentual variation
+percentual_variation_12_months <- function(x) {
+  return((x / dplyr::lag(x, n = 12) - 1))
+}
+
+# Apply the function to the subset of variables
+data_percentual_variation <- data %>%
+  mutate(across(all_of(variables_to_calculate), percentual_variation_12_months, .names = "pct_var_{col}"))
+
+View(data_percentual_variation)
+
+# Create new log-transformed variables
+data <- data %>%
+  mutate(across(c(y, industrial_inputs, metals, energy, shipping, fx,
+                  industrial_prod, construction_licences_area, google_trends),
+                list(log = ~log(.)), .names = "{.col}_log"))
+
+
+
+# Create new log-transformed variables
+data_reduced <- data_reduced %>%
+  mutate(across(c(y, industrial_inputs, metals, energy, shipping, fx,
+                  industrial_prod, construction_licences_area, google_trends),
+                list(log = ~log(.)), .names = "{.col}_log"))
+
+# Subset the dataframe by selecting specific columns
+data_final <- data_reduced %>%
+  select(y_log, industrial_inputs_log, metals_log, energy_log,
+         shipping_log, fx_log,industrial_prod_log,
+         construction_licences_area_log, google_trends_log,
+         unemployment, interest_rate)
+
+# Subset only percentual changes
+data_percentual_variation <- data_percentual_variation %>%
+  select(pct_var_y, pct_var_industrial_inputs, pct_var_metals, pct_var_energy,
+         pct_var_shipping, pct_var_fx,pct_var_industrial_prod,
+         pct_var_construction_licences_area, pct_var_google_trends,
+         unemployment, interest_rate)
+
+# Ploting ----------------
 # reset margins
 par(mfrow = c(1, 1))
 
-# DO THIS AFTER LOG TRANS
-# Basic boxplot for multiple columns
-# Setting up the plotting area
-par(mfrow = c(1, ncol(data_reduced)))  # Arrange plots in 1 row and as many columns as variables
+# dependent variable
+clean_data$category <- as.factor(clean_data$date)
+# Set up the plot without drawing the points
+plot(1:length(clean_data$category), clean_data$y, type = "n", xaxt = "n",
+     xlab = "date", ylab = "Home Price Index", main = "Evolution of Home Prices over time")
 
-# Loop over each column to create a boxplot
-for (i in 1:ncol(data_reduced)) {
-  boxplot(data_reduced[, i], main = names(data_reduced)[i], col = rainbow(ncol(data_reduced))[i])
-}
+# Add the categorical labels to the x-axis
+axis(1, at = 1:length(clean_data$category), labels = clean_data$category)
 
-# do a series plot to see if there is trend and seasonality----------------------
+# Add the lines and points to the plot
+lines(1:length(clean_data$category), clean_data$y, type = "o", col = "blue", pch = 16)
+
+# Histograms/Boxplots of the percentual variations
+
+# Y
+boxplot(data_percentual_variation$pct_var_y , horizontal=TRUE  ,frame=F)
+hist(data_percentual_variation$pct_var_y , breaks=40)
 
 
 # Histograms-----------------
@@ -122,13 +181,15 @@ par(mar = c(2, 2, 2, 2))  # Adjust margins to make them smaller
 par(mfrow = c(3, 5))  # Example layout; adjust if necessary
 
 # Histograms for each variable
-for (i in 1:ncol(data_reduced)) {
-  hist(data_reduced[[i]], main = names(data_reduced)[i], xlab = names(data_reduced)[i], col = "blue", border = "black")
+for (i in 1:ncol(data_percentual_variation)) {
+  hist(data_percentual_variation[[i]], main = names(data_percentual_variation)[i], xlab = names(data_percentual_variation)[i], col = "blue", border = "black")
 }
+
 
 # Reset layout
 par(mfrow = c(1, 1))
 
+pairs(data_percentual_variation)
 
 
 # Covariance---------------
@@ -172,21 +233,6 @@ hist(data_reduced$y)
 # boxplot
 
 
-# Variable Transformations----------------
-
-
-# Create new log-transformed variables
-data_reduced <- data_reduced %>%
-  mutate(across(c(y, industrial_inputs, metals, energy, shipping, fx,
-                  industrial_prod, construction_licences_area, google_trends),
-                list(log = ~log(.)), .names = "{.col}_log"))
-
-# Subset the dataframe by selecting specific columns
-data_final <- data_reduced %>%
-  select(y_log, industrial_inputs_log, metals_log, energy_log,
-         shipping_log, fx_log,industrial_prod_log,
-         construction_licences_area_log, google_trends_log,
-         unemployment, interest_rate)
 # Multicolinearity Check--------------------
 
 # here a value bigger than 10 is supposed to have high multicolinearity 
