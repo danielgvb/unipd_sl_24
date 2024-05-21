@@ -191,6 +191,30 @@ par(mfrow = c(1, 1))
 
 pairs(data_percentual_variation)
 
+# Boxplot for all at once
+install.packages("reshape2")
+library(reshape2)
+# Melt the dataframe to long format
+# Melt the dataframe to long format
+data_long <- melt(data_percentual_variation)
+
+# Adjust graphical parameters
+par(mar = c(7, 5, 4, 2) + 0.1)  # Increase bottom margin
+
+# Create the boxplot without x-axis labels
+boxplot(value ~ variable, data = data_long,
+        main = "Boxplot of Multiple Variables",
+        xlab = "", ylab = "Value",
+        col = "lightblue", border = "darkblue", xaxt = 'n')
+
+# Add custom x-axis labels at a 45-degree angle
+labels <- levels(data_long$variable)
+text(x = 1:length(labels), y = par("usr")[3] - 0.5, labels = labels, srt = 45, adj = 1, xpd = TRUE, cex = 0.8)
+
+# Reset graphical parameters to default
+par(mar = c(5, 4, 4, 2) + 0.1)
+# This one goes in the report, not so much variability in prices even a lot in X vars
+
 
 # Covariance---------------
 
@@ -200,14 +224,8 @@ cov_matrix
 correl_matrix <- cor(data_reduced)
 correl_matrix
 
-# Easy way
-install.packages("corrplot")
-library(corrplot)
+# Heatmap of correl
 
-corrplot(correl_matrix)
-
-# but there is the base implementation
-# Heatmap using base R
 image(1:ncol(correl_matrix), 1:ncol(correl_matrix), correl_matrix,
       main = "Correlation Matrix Heatmap",
       xlab = "Variables", ylab = "Variables", axes = FALSE,
@@ -225,12 +243,6 @@ print(cor_matrix)
 heatmap(cor_matrix, symm = TRUE)
 
 
-# Look at target and relationship between target and covariates
-
-# histogram
-hist(data_reduced$y)
-
-# boxplot
 
 
 # Multicolinearity Check--------------------
@@ -258,6 +270,10 @@ print(vif_values)
 # Perform linear regression
 model <- lm(y_log ~ ., data = data_final)  # Replace 'Y' with the dependent variable name
 summary(model)
+
+# Model on percentual vars
+#model <- lm(pct_var_y ~ ., data = data_percentual_variation)
+#summary(model)
 
 # Predict and evaluate the model on the test set
 predictions <- predict(model, newdata = data_final)
