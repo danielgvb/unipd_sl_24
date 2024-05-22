@@ -8,9 +8,9 @@ rm(list = ls())
 
 
 library(readxl)
-library(dplyr)
-library(car)
-library(lmtest)
+library(dplyr) # for dataframe manipulation
+library(car) # for vif
+library(lmtest) # for breusch pagan test
 
 # change here for current data path
 data <- read_excel("C:/Users/danie/Documents/GitHub/unipd_sl_24/data/data.xlsx",sheet = "dataframe_col")
@@ -192,7 +192,7 @@ par(mfrow = c(1, 1))
 pairs(data_percentual_variation)
 
 # Boxplot for all at once
-install.packages("reshape2")
+#install.packages("reshape2")
 library(reshape2)
 # Melt the dataframe to long format
 # Melt the dataframe to long format
@@ -251,22 +251,36 @@ heatmap(cor_matrix, symm = TRUE)
 vif(lm(y_log ~ ., data = data_final))
 
 # some variables like shipping, industrial prod, metals and industrial input are high,
+# Metals and industrial inputs are very similar / metals is a part of industrial inputs,
+# drop metals
+
+
+
+data_final <- data_final %>% select(-metals_log)
+head(data_final)
+
+# re run multicoliniarity
+
+vif(lm(y_log ~ ., data = data_final))
+
+# Industrial production and unemployment could be related but cant delete one at this point.
+
 # consider regularization using ridge or lasso
 # or see how it behaves without industrial inputs
 
 # Assume var_to_exclude is the name of the variable you want to exclude
-var_to_exclude <- "industrial_inputs_log"
+# var_to_exclude <- "industrial_inputs_log"
+# 
+# # Create a formula that excludes the specific variable
+# predictors <- setdiff(names(data_final), c("y_log", var_to_exclude))
+# formula <- as.formula(paste("y_log ~", paste(predictors, collapse = " + ")))
+# 
+# # Fit the model and calculate VIF
+# vif_values <- vif(lm(formula, data = data_final))
+# print(vif_values)
 
-# Create a formula that excludes the specific variable
-predictors <- setdiff(names(data_final), c("y_log", var_to_exclude))
-formula <- as.formula(paste("y_log ~", paste(predictors, collapse = " + ")))
 
-# Fit the model and calculate VIF
-vif_values <- vif(lm(formula, data = data_final))
-print(vif_values)
-
-
-# Linear Regression-----------------
+# OLS 1 Log-Log-----------------
 # Perform linear regression
 model <- lm(y_log ~ ., data = data_final)  # Replace 'Y' with the dependent variable name
 summary(model)
@@ -274,6 +288,10 @@ summary(model)
 # Model on percentual vars
 #model <- lm(pct_var_y ~ ., data = data_percentual_variation)
 #summary(model)
+
+# Post estimation Model 1----------------
+# See standard R plots
+plot(model)
 
 # Predict and evaluate the model on the test set
 predictions <- predict(model, newdata = data_final)
@@ -283,19 +301,19 @@ actuals <- data_final$y_log  # Replace 'Y' with the dependent variable name
 mse <- mean((predictions - actuals)^2)
 print(mse)
 
-# Post estimation--------------
-
 # checking properties of the residuals
 
 residuals     <- residuals(model)
 y.hat <- fitted.values(model)
 sum(residuals)
 
+# Histogram of residuals
+hist(residuals(model), breaks = 30, main = "Residuals Histogram")
+
 # Plot QQ plot and histogram for residuals
 qqnorm(residuals, main = "QQ Plot of Residuals", col ='blue')
 qqline(residuals, col = "red")
 # They look approximately normal
-
 
 # Do Test of normality to residuals
 
@@ -309,6 +327,7 @@ print(shapiro_test)
 ks_test <- ks.test(residuals, "pnorm", mean = mean(residuals), sd = sd(residuals))
 print(ks_test)
 
+# Both p-values are > 0.05, so the residuals should be normal
 
 # Check for Homoskedasticity
 plot(fitted(model), residuals(model), main="Residuals vs Fitted")
@@ -316,10 +335,20 @@ abline(h=0, col="red")
 
 # Breusch-Pagan Test
 
-
 bptest(model)
 # P value < 0.05 -> There is Heteroskedasticiy
 
+# Multicolinearity
+
+vif(model)
+# Shipping and Industrial production could be linearly correlated
+
+
+# Model fit
+summary(model)$r.squared
+
+
+# Influential plots
 # Cook's Distance Plot
 plot(cooks.distance(model), main="Cook's Distance")
 abline(h = 4/(nrow(data_final)-length(coef(model))), col="red")  # Common threshold line
@@ -329,12 +358,112 @@ plot(hatvalues(model), main="Leverage Values")
 abline(h = 2*mean(hatvalues(model)), col="red")  # Common threshold line
 
 
+# Autocorrelation plot
+# Durbin Watson
+dwtest(model)
+# H0 (null hypothesis): There is no correlation among the residuals.
+# p-value < 0.05 => reject H0, so there looks like there is serial correlation in residuals
+
+# For positive serial correlation, consider adding lags of the dependent and/or independent variable to the model.
+# For negative serial correlation, check to make sure that none of your variables are overdifferenced.
+# For seasonal correlation, consider adding seasonal dummy variables to the model.
+
+# Check type of autocorrelation
+
+# Plot ACF of residuals
+acf(residuals, main = "ACF of Regression Residuals")
+
+# Plot PACF of residuals
+pacf(residuals, main = "PACF of Regression Residuals")
+
+# According to these plots, we should include the lagged y in our model
+# to account for the ARIMA nature of the timeseries
+
+
+# Outliers
+std_res <- rstandard(model)
+plot(std_res, main="Standardized Residuals")
+abline(h=c(-2, 2), col="red")
+
+# There are are 3 values of outliers
+
 # Tests suggest normality in the residuals, but barely in the Shapiro Wilk 
 # F-test for the comparison of nested models
 
+# Reduce the model until it works
 
 full.mod <- lm(y_log ~ ., data = data_final)
-red.mod <-  lm(sales~TV)
+summary(full.mod)
+# Remove energy
+red.mod <- update(full.mod, . ~ . -energy_log)
+
 
 anova(red.mod, full.mod)
+
+# This value indicates the significance level of the F-statistic.
+# A small p-value (typically < 0.05) suggests that the additional predictors
+# in the full model significantly improve the model fit compared 
+# to the reduced model.
+# Energy does not improve model
+summary(red.mod)
+# Remove industrial_inputs_log (only price variable so far)
+red.mod2 <- update(red.mod, . ~ . -industrial_inputs_log)
+anova(red.mod, red.mod2)
+# Can safely remove industrial inputs (but makes no sense)
+summary(red.mod2)
+# All predictors are statistically significant
+
+# Post estimation 2--------------
+
+residuals_red     <- residuals(red.mod2)
+
+# Histogram of residuals
+hist(residuals(model), breaks = 30, main = "Residuals Histogram Reduced Model")
+
+# Plot QQ plot and histogram for residuals
+qqnorm(residuals_red, main = "QQ Plot of Residuals", col ='blue')
+qqline(residuals_red, col = "red")
+# They look approximately normal
+
+# Do Test of normality to residuals
+
+# For all these tests, the null hypothesis H0  is that the residuals are normally distributed.
+# pvalue > 0.05 -> Fail to reject the null hypothesis, suggesting that the residuals are normally distributed.
+# Perform Shapiro-Wilk test
+shapiro_test <- shapiro.test(residuals_red)
+print(shapiro_test)
+
+# Perform Kolmogorov-Smirnov test
+ks_test <- ks.test(residuals_red, "pnorm", mean = mean(residuals_red), sd = sd(residuals_red))
+print(ks_test)
+
+# Both p-values are > 0.05, so the residuals should be normal
+
+# Check for Homoskedasticity
+plot(fitted(red.mod2), residuals(red.mod2), main="Residuals vs Fitted")
+abline(h=0, col="red")
+
+# Breusch-Pagan Test
+
+bptest(red.mod2)
+# P value < 0.05 -> There is Heteroskedasticiy
+
+# Multicolinearity
+
+vif(red.mod2)
+# Shipping and Industrial production could be linearly correlated
+
+
+# Model fit
+summary(red.mod2)$r.squared
+
+
+# Influential plots
+# Cook's Distance Plot
+plot(cooks.distance(red.mod2), main="Cook's Distance")
+abline(h = 4/(nrow(data_final)-length(coef(red.mod2))), col="red")  # Common threshold line
+
+# Leverage Plot
+plot(hatvalues(red.mod2), main="Leverage Values")
+abline(h = 2*mean(hatvalues(red.mod2)), col="red")  # Common threshold line
 
