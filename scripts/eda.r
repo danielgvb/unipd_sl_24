@@ -236,24 +236,11 @@ par(mar = c(5, 4, 4, 2) + 0.1)
 
 # Covariance---------------
 
-# Identify columns that do not contain "log"
-columns_to_keep <- !grepl("log", names(data_reduced))
 
-# Subset the dataframe to keep only these columns
-df_not_log <- data_reduced[, columns_to_keep]
-
-# Remove y_1
-df_not_log <- subset(df_not_log, select = -y_1)
-
-# Display the filtered dataframe
-print(df_not_log)
-
-
-
-cov_matrix <- cov(df_not_log)
+cov_matrix <- cov(data_final)
 cov_matrix
 
-correl_matrix <- cor(df_not_log)
+correl_matrix <- cor(data_final)
 correl_matrix
 
 # Heatmap of correl
@@ -553,14 +540,7 @@ print(ks_test)
 
 # Both p-values are > 0.05, so the residuals should be normal
 
-# Check for Homoskedasticity
-plot(fitted(model_lagged), residuals(model_lagged), main="Residuals vs Fitted")
-abline(h=0, col="red")
 
-# Breusch-Pagan Test
-
-bptest(model_lagged)
-# P value < 0.05 -> There is Heteroskedasticiy
 
 # Multicolinearity
 
@@ -622,7 +602,68 @@ std_res <- rstandard(model_lagged)
 plot(std_res, main="Standardized Residuals")
 abline(h=c(-2, 2), col="red")
 
+# OLS Robust STD Errors--------------
 
+#install.packages("sandwich")
+library(sandwich)
+
+data_final <- data_reduced %>%
+  select(y_log, shipping_log, fx_log, construction_licences_area_log,
+         industrial_prod_log,google_trends_log,
+         unemployment, interest_rate)
+
+model <- lm(y_log ~ ., data = data_final)
+summary (model)
+# Calculate robust standard errors
+robust_se <- coeftest(model, vcov = vcovHC(model, type = "HC1"))
+
+# Display coefficients with robust standard errors
+print(robust_se)
+
+
+# Interpretation:
+# B0: when all the covariates are 0, then y_log is 0.55,
+# which is 1.74
+# B1, A 1% increase in the shipping costs,
+# means a 0.09% increase in house prices (MoM)
+
+# Coefficients dont change that much
+
+# Postestimation is the same as red.mod3
+# Everything is the same, except the coefficients of the LM, which account for SE
+
+# Forward AIC Stepwise selection-------------
+
+# Fit the null model (intercept only)
+null_model <- lm(y_log ~ 1, data = data_reduced)
+
+# Specify the full model with all potential predictors
+full_model <- lm(y_log ~ industrial_inputs_log + shipping_log + fx_log + industrial_prod_log + 
+                   construction_licences_area_log + google_trends_log + 
+                   unemployment + interest_rate, data = data_reduced)
+
+# Perform forward selection based on AIC
+forward_model <- step(null_model, 
+                      scope = list(lower = null_model, upper = full_model), 
+                      direction = "forward")
+
+# Display the summary of the selected model
+summary(forward_model)
+
+# Backward AIC Stepwise selection-------------
+
+full_model <- lm(y_log ~ industrial_inputs_log+ shipping_log + fx_log + industrial_prod_log + 
+                   construction_licences_area_log + google_trends_log + 
+                   unemployment + interest_rate, data = data_reduced)
+
+# Perform backward selection based on AIC
+backward_model <- step(full_model, 
+                       direction = "backward")
+
+# Display the summary of the selected model
+summary(backward_model)
+
+# Backward gives construction licences, which is good
 
 # Regularization------------
 # Done over full model
@@ -707,8 +748,11 @@ results <- data.frame(
 
 print(results)
 
+
+
+
 # Meter el cemento (esperando refinitiv)
-# Meter regression Lasso, Ridge (OK)
+
 # Meter AIC y BIC backward and forward selection
 # Meter un modelo generalizado de errores no normales
 # Montar un Notebook
