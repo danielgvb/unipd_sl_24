@@ -665,6 +665,11 @@ summary(backward_model)
 
 # Backward gives construction licences, which is good
 
+# Overall the models converge to this last model (removing by p-value), stepwise...
+# So we can do the post estimation of the red.mod3, because is the same,
+# but use the coefficients of the model with robust errors for inference
+
+
 # Regularization------------
 # Done over full model
 #install.packages("glmnet")
