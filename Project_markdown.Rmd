@@ -7,14 +7,14 @@ Authors: Daniel Gutierrez, Rafael Hernandez, Camilo Sanabria
 
 ## Project Introduction
 
-In this project we aim to study the influence of macroeconomics indicators on the house price index in Colombia. This indicator measure the evolution through time of the market prices of residential properties as a percentage change. The idea of the analysis is to present and study the possible effects of the macroeconomics indicators on the house prices through the construction of regression models, evaluating their performance through the application of several concepts presented on the Statistical Learning Course.
+In this project we aim to study the influence of macroeconomics indicators on the house price index in Colombia. This indicator measure the evolution through time of the market prices of residential properties as a percentage change. The idea of the analysis is to present and study the possible effects of the macroeconomics indicators on the house prices through the construction of regression models, evaluating their results and interpreting the models in the context of the data.
 
 ## 1. Dataset Introduction and Preprocessing
 
-The dataset was constructed gattering information from multiple sites: the Colombian department of statistics (DANE) , the Colombian central bank (Banco de la Repúlbica), Google trends and the Federal Reserve Economic Data (FRED).
+The dataset was constructed gattering information from multiple sites: the Colombian department of statistics (DANE) , the Colombian central bank (Banco de la Repúlbica), Google trends and the Federal Reserve Economic Data (FRED). In general, all the visited sites present the data as a .csv file with tables according to filters related with the time span of interest. With this we construct a consolidated database un .csv format with the following variables:   
 
 | Variable                   | Description                                                                                                    |
-|-----------------|-------------------------------------------------------|
+|------------------|------------------------------------------------------|
 | House Price Index (y)      | Measure of the average change in the residential properties price as an index                                  |
 | Industrial_inputs          | Measure of the average changes in the industry input costs as an index                                         |
 | metals                     | Measure of the average price change in metal costs excluding gold as an index                                  |
@@ -45,7 +45,7 @@ library(caret)
 ```{r}
 #Read the data using the read_excel function
 #Change here for current data path
-data <- read_excel("C:/Users/CAMILO/Documents/clases/statistical_project/data.xlsx",sheet = "dataframe_col")
+data <- read_excel("C:/Users/CAMILO/Documents/GitHub/unipd_sl_24/data/data.xlsx",sheet = "dataframe_col")
 View(data)
 #Present the first 5 rows of the data
 head(data,5)
@@ -53,7 +53,7 @@ head(data,5)
 
 # Data pre-processing and cleaning
 
-After have a initial version of the data we realized the existence of NA values in some variables due to the time span of the data collection. For this reason we implement the following process to clean the data and the construction of some values for the finished constructions variable.
+After have an initial version of the data we proceed with the pre-processing and cleaning steps. As a first approximation we identify the number of NA values in each one of the columns. We realize that the variable finished_constructions requires an additional pre-processing step because it is recorded by quarters while the other are registered by months. We propose the following reconstruction steps:    
 
 ```{r}
 
@@ -76,8 +76,8 @@ data$finished_constructions <- na.locf(data$finished_constructions, na.rm = FALS
 # Fill trailing NA values with the last non-NA value
 data$finished_constructions <- na.locf(data$finished_constructions, na.rm = FALSE, fromLast = TRUE)
 ```
-(Not implemented as the result is no good)
-As we are interested in use the House Price Index as regressor related with the effect of the other macroeconomic variables, for that reason we implement a lag of one period over this variable
+
+(Not implemented as the result is no good) As we are interested in use the House Price Index as regressor related with the effect of the other macroeconomic variables, for that reason we implement a lag of one period over this variable
 
 ```{r}
 # Do lag of the dependent variable bc should be included as regressor
@@ -87,7 +87,7 @@ data <- data %>%
 
 # Summary stats and final dataset
 
-Then we proceed to remove the left rows with NAN values, drop the columns of date related with the time period of the indicators and the column MY also referred to the date in form of MONTH()YEAR(). Finally we present a summary of the final dataset. This taking account thet we leave the data starting from January 2005 untill August 2023.
+We proceed to remove the left rows with NA values eliminating from the dataset the registers before January 2005, also we drop  the column MY also referred to the date in form of MONTH()YEAR(). Finally, we present a summary of the dataset after these transformations. In particular we see that the Housing Price Index range present values on [87.35,203.50] with an IQR=70.38.
 
 ```{r}
 # Removing rows with any NA values
@@ -160,13 +160,14 @@ filtered_df_shipping
 ```
 
 # Percentual variation
-As part of the explorator analysis we study the percentual variation of the variables. This process helps to identify trends and patterns in a clearly way. 
+
+As part of the exploratory analysis we study the percentual variation of the variables. This with the intention to identify trends and patterns in a clearly way.
 
 ```{r}
 # Create Differences (Inflation)
 colnames(data_reduced)
 
-# Select subset of variables you want to difference
+# Select subset of variables to difference
 variables_to_calculate <- c("y", "industrial_inputs", "metals",
                             "energy", "shipping", "fx", "industrial_prod",
                             "construction_licences_area", "finished_constructions",
@@ -187,7 +188,9 @@ View(data_percentual_variation)
 ```
 
 # Log-transformation
-We apply a log transformation with the intention of normalize the data as some variables are index that change over time and others area real values in a wide range. Log helps to reduce the variability of the data, compressing the scale and helps to linearize those relationships between the variables helping to the interpret ability of the results. We apply log transformation to all variables except those that are already percentages: the unemployment rate and the interest rate.  
+
+We apply a log transformation with the intention of normalize the data as some variables are index that change over time and others area real values in a wide range. Our idea is to reduce the variability of the data, compressing the scale and helping to linearize those relationships between the variables for the interpretability of the results. We apply log transformation to all variables except those that are already percentages: the unemployment rate and the interest rate.
+
 ```{r}
 # Create new log-transformed variables
 data_reduced <- data_reduced %>%
@@ -214,7 +217,8 @@ data_percentual_variation <- data_percentual_variation %>%
 
 #Ploting
 
-Continuing with the exploratory analysis we plot the variable of Home Price Index to see its behavior through time. It is possible to see a clear tendency starting from the year 2005 until the year 2021, then a little decay was recorded. 
+Continuing with the exploratory analysis we plot the variable of Home Price Index to see its behavior through time. It is possible to see a clear increase tendency starting from the year 2005 until the year 2021, then a little decay was recorded.
+
 ```{r}
 # reset margins
 par(mfrow = c(1, 1))
@@ -230,7 +234,9 @@ axis(1, at = 1:length(data_reduced$category), labels = data_reduced$category)
 # Add the lines and points to the plot
 lines(1:length(data_reduced$category), data_reduced$y, type = "o", col = "blue", pch = 16)}
 ```
-Another useful information can be find in the box plots and histograms fo the percentual variations,in these plots we see that the central value of the percentual variations is positive, indicating and overall increase. the outliers were expected in the senseo of those negatives variations due to the decrease on on the last years of the House Price Index. Also,  it is possible to see this on the histogram a right skewed behavior. 
+
+Another useful information can be find in the box plots and histograms for the percentual variations,in these plots we see that the central value of the percentual variations is positive, indicating and overall increase. the outliers were expected in the sense of those negatives variations due to the decrease on the last years of the House Price Index. Also, it is possible to see this on the histogram a right skewed behavior.
+
 ```{r}
 # Histograms/Boxplots of the percentual variations
 
@@ -239,7 +245,9 @@ par(mfrow = c(1, 2))
 {boxplot(data_percentual_variation$pct_var_y , horizontal=TRUE  ,frame=F,main = "Boxplot of Percentual Variation Y")
 hist(data_percentual_variation$pct_var_y , breaks=40,main = "Histogram of Percentual Variation Y",xlab = "Percentual Variation")}
 ```
+
 We did a similar procedure for the rest of the variables with respect to their percentual variation
+
 ```{r}
 
 # Histograms-----------------
@@ -253,7 +261,9 @@ for (i in 1:ncol(data_percentual_variation)) {
   hist(data_percentual_variation[[i]], main = names(data_percentual_variation)[i], xlab = names(data_percentual_variation)[i], col = "blue", border = "black")
 }
 ```
-For an easier interpretation we plot the boxplot for the percentual variation of each variable in a same graph. This plot shows that the variables with a high variability in percentual variation are the shipping index price and the energy index price, in other hand the ones that show a more stable variability are the unemployment rate and interest rate. 
+
+For an easier interpretation we plot the boxplot for the percentual variation of each variable in a same graph. This plot shows that the variables with a high variability in percentual variation are the shipping index price and the energy index price, in other hand the ones that show a more stable variability are the unemployment rate and interest rate.
+
 ```{r}
 # Reset layout
 par(mfrow = c(1, 1))
@@ -289,7 +299,7 @@ text(x = 1:length(labels), y = par("usr")[3] - 0.5, labels = labels, srt = 45, a
 
 # Covariance and correlation
 
-We present the correlation and covariance of the used variables in aims to understand its relations. 
+We present the correlation and covariance of the used variables in aims to understand its relations.
 
 ```{r}
 # Identify columns that do not contain "log"
@@ -332,6 +342,7 @@ heatmap(cor_matrix, symm = TRUE)
 ```
 
 # Multicolinearity Check
+
 As part of the analysis we present a multicollinearity test in top of the results related with the correlation of the variables. We first calculate the VIF for each predictor variable, and remove the highly collinear ones
 
 ```{r}
@@ -370,7 +381,8 @@ vif(lm(y_log ~ ., data = data_final))
 
 ## Modelling the data
 
-We start with a simple regression model for the data, remember that this process will be executed with the variables after the log normalization. In this first iteration considering all the variables 
+We start with a simple regression model for the data, remember that this process will be executed with the variables after the log normalization. In this first iteration considering all the variables
+
 ```{r}
 # OLS 1 Log-Log-----------------
 # Perform linear regression
@@ -445,7 +457,9 @@ abline(h = 2*mean(hatvalues(model)), col="red")}  # Common threshold line
 
 
 ```
+
 After the first iteration we consider the process of eliminating variables based on its significance to the model
+
 ```{r}
 
 # Variable Selection-----------
@@ -533,7 +547,9 @@ abline(h = 4/(nrow(data_final)-length(coef(red.mod3))), col="red")}  # Common th
 {plot(hatvalues(red.mod3), main="Leverage Values")
 abline(h = 2*mean(hatvalues(red.mod3)), col="red")}  # Common threshold line
 ```
-This is the process made with the laggedy  value with  the intention of reduce the Homoskedasticity but it does not work so good 
+
+This is the process made with the laggedy value with the intention of reduce the Homoskedasticity but it does not work so good
+
 ```{r}
 # Homoskedasticity
 
@@ -684,7 +700,7 @@ This is the process made with the laggedy  value with  the intention of reduce t
 # abline(h=c(-2, 2), col="red")
 ```
 
-This process consider the model with robust std erros, we could think in leave it or not. 
+This process consider the model with robust std erros, we could think in leave it or not.
 
 ```{r}
 # OLS Robust STD Errors--------------
@@ -766,6 +782,7 @@ summary(backward_model)
 # So we can do the post estimation of the red.mod3, because is the same,
 # but use the coefficients of the model with robust errors for inference
 ```
+
 # Lasso regresion model
 
 ```{r}
@@ -829,7 +846,8 @@ cat("LASSO Regression R2:", lasso_r2, "\n")
 lasso_coefficients <- coef(lasso_model, s = lasso_best_lambda)
 print(lasso_coefficients)
 ```
-# Ridge regression model 
+
+# Ridge regression model
 
 ```{r}
 # Fit Ridge regression model
@@ -854,4 +872,3 @@ results <- data.frame(
 
 print(results)
 ```
-
