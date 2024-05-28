@@ -1,4 +1,4 @@
-# EDA for statistical learning project------------
+# statistical learning project------------
 
 # remove everything from memory
 
@@ -37,13 +37,37 @@ print(na_counts)
 # Interpolate finished_constructions
 # Interpolate NA values in the finished_constructions column
 # Interpolate internal NA values in the finished_constructions column
-data$finished_constructions <- na.approx(data$finished_constructions, na.rm = FALSE)
 
-# Fill leading NA values with the first non-NA value
-data$finished_constructions <- na.locf(data$finished_constructions, na.rm = FALSE, fromLast = FALSE)
+# Convert date column to Date type if it's not already
+data$date <- as.Date(data$date)
 
-# Fill trailing NA values with the last non-NA value
-data$finished_constructions <- na.locf(data$finished_constructions, na.rm = FALSE, fromLast = TRUE)
+# Copy the dataframe to avoid modifying the original one
+data_filled <- data
+
+# Find the indices where the date is at the end of a trimester
+trimester_end_indices <- which(format(data$date, "%m") %in% c("03", "06", "09", "12"))
+
+# Loop through each trimester end and distribute the value to the previous three months
+for (i in trimester_end_indices) {
+  if (i - 2 > 0) {
+    # Distribute the value to the current month and the previous two months
+    value_to_distribute <- data$finished_constructions[i] / 3
+    data_filled$finished_constructions[i] <- value_to_distribute
+    data_filled$finished_constructions[i - 1] <- value_to_distribute
+    data_filled$finished_constructions[i - 2] <- value_to_distribute
+  }
+}
+
+data_filled$finished_constructions <- na.locf(data_filled$finished_constructions, na.rm = FALSE)
+
+View(data_filled)
+
+# Re name as data to continue process
+data <- data_filled
+
+# Check the plot
+plot(data$date,data$finished_constructions, type = "o", col = "darkblue", xlab = "date", ylab = "Constructions",
+     main = "Finished Ccnstructions")
 
 # Do lag of the dependent variable bc should be included as regressor
 data <- data %>%
