@@ -11,10 +11,10 @@ In this project we aim to study the influence of macroeconomics indicators on th
 
 ## 1. Dataset Introduction and Preprocessing
 
-The dataset was constructed gattering information from multiple sites: the Colombian department of statistics (DANE) , the Colombian central bank (Banco de la Repúlbica), Google trends and the Federal Reserve Economic Data (FRED). In general, all the visited sites present the data as a .csv file with tables according to filters related with the time span of interest. With this we construct a consolidated database un .csv format with the following variables:   
+The dataset was constructed gattering information from multiple sites: the Colombian department of statistics (DANE) , the Colombian central bank (Banco de la Repúlbica), Google trends and the Federal Reserve Economic Data (FRED). In general, all the visited sites present the data as a .csv file with tables according to filters related with the time span of interest. With this we construct a consolidated database un .csv format with the following variables:
 
 | Variable                   | Description                                                                                                    |
-|------------------|------------------------------------------------------|
+|--------------------|----------------------------------------------------|
 | House Price Index (y)      | Measure of the average change in the residential properties price as an index                                  |
 | Industrial_inputs          | Measure of the average changes in the industry input costs as an index                                         |
 | metals                     | Measure of the average price change in metal costs excluding gold as an index                                  |
@@ -31,7 +31,7 @@ The dataset was constructed gattering information from multiple sites: the Colom
 These variables present real values,and were selected as they have an initial coherent relation with the housing sector. We present the import process of the data
 
 ```{r import-data}
-# Necessary libraries
+# Necessary libraries to run all the code chunks and plots
 library(readxl)
 library(dplyr) 
 library(car) 
@@ -53,7 +53,7 @@ head(data,5)
 
 # Data pre-processing and cleaning
 
-After have an initial version of the data we proceed with the pre-processing and cleaning steps. As a first approximation we identify the number of NA values in each one of the columns. We realize that the variable finished_constructions requires an additional pre-processing step because it is recorded by quarters while the other are registered by months. We propose the following reconstruction steps:    
+After have an initial version of the data we proceed with the pre-processing and cleaning steps. As a first approximation we identify the number of NA values in each one of the columns. We realize that the variable finished_constructions requires an additional pre-processing step because it is recorded by quarters while the other are registered by months. We propose the following reconstruction steps:
 
 ```{r}
 
@@ -87,7 +87,7 @@ data <- data %>%
 
 # Summary stats and final dataset
 
-We proceed to remove the left rows with NA values eliminating from the dataset the registers before January 2005, also we drop  the column MY also referred to the date in form of MONTH()YEAR(). Finally, we present a summary of the dataset after these transformations. In particular we see that the Housing Price Index range present values on [87.35,203.50] with an IQR=70.38.
+We proceed to remove the left rows with NA values eliminating from the dataset the registers before January 2005, also we drop the column MY also referred to the date in form of MONTH()YEAR(). Finally, we present a summary of the dataset after these transformations. In particular we see that the Housing Price Index range present values on [87.35,203.50] with an IQR=70.38.
 
 ```{r}
 # Removing rows with any NA values
@@ -108,7 +108,7 @@ print(summary_stats)
 
 ## Exploratory Analysis
 
-# Outliers
+# Outliers based on z scores (Eliminate?)
 
 As a first step on the exploratory analysis we identify the outliers presented in the data (At this moment this analysis was implemented considering a z score fitting a distribution over the time series, at least they allow to see some outliers like the pick presented in the 2022 due to external effects)
 
@@ -156,12 +156,101 @@ filtered_df_shipping
 # preocupation of winter in Europe, makes sense to leave it
 
 # Create a pairs plot excluding columns C and D
-# pairs(data_reduced) # does not say much
 ```
 
-# Percentual variation
+#Outliers based on the IQR
+As an initial step to better understand the data and its behavior we find the outliers of each one of the variables using the IQR to select those points outside the bounds. As a result we found that the variables that present the most quantity of outliers are the shipping, the interest rate and the unemployment.
 
-As part of the exploratory analysis we study the percentual variation of the variables. This with the intention to identify trends and patterns in a clearly way.
+```{r}
+# Function to detect outliers based on IQR
+detect_outliers_single_var <- function(column) {
+  column <- na.omit(column) 
+  Q1 <- quantile(column, 0.25, na.rm = TRUE)
+  Q3 <- quantile(column, 0.75, na.rm = TRUE)
+  IQR <- Q3 - Q1
+  lower_bound <- Q1 - 1.5 * IQR
+  upper_bound <- Q3 + 1.5 * IQR
+  
+  outliers <- column[column < lower_bound | column > upper_bound]
+  return(outliers)
+}
+
+# List to store outliers for each variable
+outliers_list <- list()
+
+# Loop through each column in the dataset
+for (var in colnames(select(data_reduced,-date))) {
+  if (is.numeric(data[[var]])) {
+    outliers_list[[var]] <- detect_outliers_single_var(data[[var]])
+  }
+}
+
+# Print outliers for each variable
+print(outliers_list)
+
+
+```
+
+```{r}
+# Create the boxplot without x-axis labels
+
+{
+par(mfrow = c(3, 1))
+boxplot(data_reduced$shipping, horizontal=TRUE  ,frame=F,main = "Boxplot of shipping")
+
+boxplot(data_reduced$unemployment, horizontal=TRUE  ,frame=F,main = "Unmeployment")
+
+boxplot(data_reduced$interest_rate, horizontal=TRUE  ,frame=F,main = "Interest rate")
+}
+```
+
+# Log-transformation
+
+We apply a log transformation with the intention of normalize the data as some variables are index that change over time and others area real values in a wide range. Our idea is to reduce the variability of the data, compressing the scale and helping to linearize those relationships between the variables for the interpretability of the results. We apply log transformation to all variables except those that are already percentages: the unemployment rate and the interest rate.
+
+```{r}
+# Create new log-transformed variables
+data_reduced <- data_reduced %>%
+  mutate(across(c(y, industrial_inputs, metals, energy, shipping, fx,
+                  industrial_prod, construction_licences_area,finished_constructions,
+                  google_trends),
+                list(log = ~log(.)), .names = "{.col}_log"))
+
+# Subset the dataframe by selecting specific columns
+data_final <- data_reduced %>%
+  select(y_log, industrial_inputs_log, metals_log, energy_log,
+         shipping_log, fx_log,industrial_prod_log,
+         construction_licences_area_log, finished_constructions_log,google_trends_log,
+         unemployment, interest_rate)
+
+
+```
+
+#Ploting the Home Price Index
+
+Continuing with the exploratory analysis we plot the variable of Home Price Index to see its behavior through time. It is possible to see a clear increase tendency starting from the year 2005 until the year 2021, then a little decay was recorded.
+
+```{r}
+# reset margins
+par(mfrow = c(1, 1))
+
+# dependent variable
+data_reduced$category <- as.factor(clean_data$date)
+# Set up the plot without drawing the points
+{plot(1:length(data_reduced$category), clean_data$y, type = "n", xaxt = "n",xlab="date", ylab = "Home Price Index", main = "Evolution of Home Prices over time")
+
+# Add the categorical labels to the x-axis
+axis(1, at = 1:length(data_reduced$category), labels = data_reduced$category)
+
+# Add the lines and points to the plot
+lines(1:length(data_reduced$category), data_reduced$y, type = "o", col = "blue", pch = 16)}
+```
+
+# Ploting percentual variation of the Home Price Index
+
+Another useful information can be found in the box plots and histograms for the percentual variations. We take the percentual variation of the variables with the intention of identify patterns and tendencies in a clearly way, considering that the majority of it is composed by index, and the study of it changes is fundamental for a complete understanding of their behavior. We start with the Home Price Index variable.
+
+In these plots we see that the central value of the percentual variations is positive, indicating and overall increase in the Home Price Index through time. Also the negatives outliers were expected because those negatives variations due to the decrease after the 2021.In the histogram it is possible to see this on the histogram a right skewed behavior.
 
 ```{r}
 # Create Differences (Inflation)
@@ -187,25 +276,8 @@ data_percentual_variation <- data %>%
 View(data_percentual_variation)
 ```
 
-# Log-transformation
-
-We apply a log transformation with the intention of normalize the data as some variables are index that change over time and others area real values in a wide range. Our idea is to reduce the variability of the data, compressing the scale and helping to linearize those relationships between the variables for the interpretability of the results. We apply log transformation to all variables except those that are already percentages: the unemployment rate and the interest rate.
-
 ```{r}
-# Create new log-transformed variables
-data_reduced <- data_reduced %>%
-  mutate(across(c(y, industrial_inputs, metals, energy, shipping, fx,
-                  industrial_prod, construction_licences_area,finished_constructions,
-                  google_trends),
-                list(log = ~log(.)), .names = "{.col}_log"))
-
-# Subset the dataframe by selecting specific columns
-data_final <- data_reduced %>%
-  select(y_log, industrial_inputs_log, metals_log, energy_log,
-         shipping_log, fx_log,industrial_prod_log,
-         construction_licences_area_log, finished_constructions_log,google_trends_log,
-         unemployment, interest_rate)
-
+# Histograms/Boxplots of the percentual variations
 # Subset only percentual changes
 data_percentual_variation <- data_percentual_variation %>%
   select(pct_var_y, pct_var_industrial_inputs, pct_var_metals, pct_var_energy,
@@ -213,33 +285,6 @@ data_percentual_variation <- data_percentual_variation %>%
          pct_var_construction_licences_area, pct_var_finished_constructions,
          pct_var_google_trends,
          unemployment, interest_rate)
-```
-
-#Ploting
-
-Continuing with the exploratory analysis we plot the variable of Home Price Index to see its behavior through time. It is possible to see a clear increase tendency starting from the year 2005 until the year 2021, then a little decay was recorded.
-
-```{r}
-# reset margins
-par(mfrow = c(1, 1))
-
-# dependent variable
-data_reduced$category <- as.factor(clean_data$date)
-# Set up the plot without drawing the points
-{plot(1:length(data_reduced$category), clean_data$y, type = "n", xaxt = "n",xlab="date", ylab = "Home Price Index", main = "Evolution of Home Prices over time")
-
-# Add the categorical labels to the x-axis
-axis(1, at = 1:length(data_reduced$category), labels = data_reduced$category)
-
-# Add the lines and points to the plot
-lines(1:length(data_reduced$category), data_reduced$y, type = "o", col = "blue", pch = 16)}
-```
-
-Another useful information can be find in the box plots and histograms for the percentual variations,in these plots we see that the central value of the percentual variations is positive, indicating and overall increase. the outliers were expected in the sense of those negatives variations due to the decrease on the last years of the House Price Index. Also, it is possible to see this on the histogram a right skewed behavior.
-
-```{r}
-# Histograms/Boxplots of the percentual variations
-
 par(mfrow = c(1, 2))
 # Y
 {boxplot(data_percentual_variation$pct_var_y , horizontal=TRUE  ,frame=F,main = "Boxplot of Percentual Variation Y")
@@ -257,12 +302,14 @@ par(mar = c(2, 2, 2, 2))  # Adjust margins to make them smaller
 par(mfrow = c(3, 5))  # Example layout; adjust if necessary
 
 # Histograms for each variable
+
 for (i in 1:ncol(data_percentual_variation)) {
   hist(data_percentual_variation[[i]], main = names(data_percentual_variation)[i], xlab = names(data_percentual_variation)[i], col = "blue", border = "black")
 }
+
 ```
 
-For an easier interpretation we plot the boxplot for the percentual variation of each variable in a same graph. This plot shows that the variables with a high variability in percentual variation are the shipping index price and the energy index price, in other hand the ones that show a more stable variability are the unemployment rate and interest rate.
+For an easier interpretation we plot the boxplot for the percentual variation of each variable in a same graph. This plot shows that the variables with a high variability in percentual variation are the shipping index price and the energy index price, in other hand the ones that show a more stable variability are the unemployment rate and interest rate. Also, the variable that show more extremes changes in the percentual variation is the one related with the construction licences area.
 
 ```{r}
 # Reset layout
