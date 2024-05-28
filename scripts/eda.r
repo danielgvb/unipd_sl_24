@@ -115,15 +115,31 @@ df_with_outliers
 outlier_counts <- df_with_outliers %>%
   summarise(across(starts_with("outlier_"), ~ sum(. == TRUE), .names = "count_{col}"))
 
-# Print the counts
-outlier_counts
+
+# See outliers that are greater than 0
+outlier_positive <- lapply(outlier_counts, function(x) x > 0)
+
+# Find the indices of values greater than 0
+positive_indices <- sapply(outlier_counts, function(x) x > 0)
+
+# Filter the list to get only the values greater than 0
+positive_values <- outlier_counts[positive_indices]
+
+# Print the filtered list
+print(positive_values)
+
+# Print the results
+print(outlier_positive)
+
 
 # print the row that has outliers
 # Filter the data frame where "outlier_z_energy" is TRUE
 filtered_df <- df_with_outliers %>%
-  filter(outlier_z_energy == TRUE | outlier_z_shipping == TRUE)
+  filter(outlier_z_energy == TRUE | outlier_z_shipping == TRUE |
+           outlier_z_unemployment == TRUE |
+           outlier_z_construction_licences_area == TRUE)
 
-head(filtered_df)
+View(filtered_df)
 
 # Filter original df to see when it was
 filtered_df_energy <- clean_data %>%
@@ -139,6 +155,25 @@ filtered_df_shipping
 
 # It was aug 2022-dec 2022, peak inflation wave, war on Ukraine and,
 # preocupation of winter in Europe, makes sense to leave it
+
+filtered_df_unemployment <- clean_data %>%
+  filter(unemployment > 0.2)
+
+filtered_df_unemployment
+# Unemployment during covid, makes sense, also is part of the nature
+
+filtered_df2 <- df_with_outliers %>%
+  filter(outlier_z_construction_licences_area == TRUE)
+
+filtered_df2
+
+filtered_df_construction <- clean_data %>%
+  filter(construction_licences_area > 2372414)
+
+filtered_df_construction
+
+# In construction could be economic comebacks
+# Check what happend here
 
 # Create a pairs plot excluding columns C and D
 # pairs(data_reduced) # does not say much
@@ -422,7 +457,7 @@ red.mod3 <- update(red.mod2, . ~ . -finished_constructions_log)
 anova(red.mod2, red.mod3)
 # Can safely remove finished constructions (but makes no sense)
 summary(red.mod3)
-# All predictors are statistically significant
+# Almost all predictors are statistically significant
 
 # Post estimation 2--------------
 
