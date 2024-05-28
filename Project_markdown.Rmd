@@ -14,7 +14,7 @@ In this project we aim to study the influence of macroeconomics indicators on th
 The dataset was constructed gattering information from multiple sites: the Colombian department of statistics (DANE) , the Colombian central bank (Banco de la Repúlbica), Google trends and the Federal Reserve Economic Data (FRED). In general, all the visited sites present the data as a .csv file with tables according to filters related with the time span of interest. With this we construct a consolidated database un .csv format with the following variables:
 
 | Variable                   | Description                                                                                                    |
-|--------------------|----------------------------------------------------|
+|-----------------------|-------------------------------------------------|
 | House Price Index (y)      | Measure of the average change in the residential properties price as an index                                  |
 | Industrial_inputs          | Measure of the average changes in the industry input costs as an index                                         |
 | metals                     | Measure of the average price change in metal costs excluding gold as an index                                  |
@@ -65,16 +65,32 @@ print(na_counts)
 # Construction and Industrial prod have nans, 
 # they are at the extremes 
 
+
+# Convert date column to Date type if it's not already
+data$date <- as.Date(data$date)
+
+# Copy the dataframe to avoid modifying the original one
+data_filled <- data
+
+
 # Interpolate finished_constructions
-# Interpolate NA values in the finished_constructions column
-# Interpolate internal NA values in the finished_constructions column
-data$finished_constructions <- na.approx(data$finished_constructions, na.rm = FALSE)
+# Find the indices where the date is at the end of a trimester
+trimester_end_indices <- which(format(data$date, "%m") %in% c("03", "06", "09", "12"))
 
-# Fill leading NA values with the first non-NA value
-data$finished_constructions <- na.locf(data$finished_constructions, na.rm = FALSE, fromLast = FALSE)
+# Loop through each trimester end and distribute the value to the previous three months
+for (i in trimester_end_indices) {
+  if (i - 2 > 0) {
+    # Distribute the value to the current month and the previous two months
+    value_to_distribute <- data$finished_constructions[i] / 3
+    data_filled$finished_constructions[i] <- value_to_distribute
+    data_filled$finished_constructions[i - 1] <- value_to_distribute
+    data_filled$finished_constructions[i - 2] <- value_to_distribute
+  }
+}
 
-# Fill trailing NA values with the last non-NA value
-data$finished_constructions <- na.locf(data$finished_constructions, na.rm = FALSE, fromLast = TRUE)
+data_filled$finished_constructions <- na.locf(data_filled$finished_constructions, na.rm = FALSE)
+
+#View(data_filled)
 ```
 
 (Not implemented as the result is no good) As we are interested in use the House Price Index as regressor related with the effect of the other macroeconomic variables, for that reason we implement a lag of one period over this variable
@@ -158,8 +174,7 @@ filtered_df_shipping
 # Create a pairs plot excluding columns C and D
 ```
 
-#Outliers based on the IQR
-As an initial step to better understand the data and its behavior we find the outliers of each one of the variables using the IQR to select those points outside the bounds. As a result we found that the variables that present the most quantity of outliers are the shipping, the interest rate and the unemployment.
+#Outliers based on the IQR As an initial step to better understand the data and its behavior we find the outliers of each one of the variables using the IQR to select those points outside the bounds. As a result we found that the variables that present the most quantity of outliers are the shipping, the interest rate and the unemployment.
 
 ```{r}
 # Function to detect outliers based on IQR
@@ -195,7 +210,7 @@ print(outliers_list)
 # Create the boxplot without x-axis labels
 
 {
-par(mfrow = c(3, 1))
+par(mfrow = c(3, 1),mar = c(5, 5, 4, 2) + 0.1)
 boxplot(data_reduced$shipping, horizontal=TRUE  ,frame=F,main = "Boxplot of shipping")
 
 boxplot(data_reduced$unemployment, horizontal=TRUE  ,frame=F,main = "Unmeployment")
@@ -309,7 +324,7 @@ for (i in 1:ncol(data_percentual_variation)) {
 
 ```
 
-For an easier interpretation we plot the boxplot for the percentual variation of each variable in a same graph. This plot shows that the variables with a high variability in percentual variation are the shipping index price and the energy index price, in other hand the ones that show a more stable variability are the unemployment rate and interest rate. Also, the variable that show more extremes changes in the percentual variation is the one related with the construction licences area.
+For an easier interpretation we plot the boxplot for the percentual variation of each variable in a same graph. This plot shows that the index variables with a high variability in percentual variation are the shipping index price and the energy index price. Also, the index variable that show less variability in the percentual variation is the one related with the industrial production.
 
 ```{r}
 # Reset layout
@@ -342,11 +357,54 @@ text(x = 1:length(labels), y = par("usr")[3] - 0.5, labels = labels, srt = 45, a
 #par(mar = c(5, 4, 4, 2) + 0.1)
 # This one goes in the report, not so much variability in prices even a lot in X vars
 
+
+```
+
+We plot these four variables to see its evolution through time
+
+```{r}
+# reset margins
+
+# Reset layout
+
+par(mfrow = c(3, 1))
+
+# dependent variable
+data_reduced$category <- as.factor(clean_data$date)
+# Set up the plot without drawing the points
+{plot(1:length(data_reduced$category), clean_data$shipping, type = "n", xaxt = "n",xlab="date", ylab = "shipping", main = "Evolution of Shipping Prices Index over time")
+axis(1, at = 1:length(data_reduced$category), labels = data_reduced$category)
+lines(1:length(data_reduced$category), data_reduced$shipping, type = "o", col = "blue", pch = 16)
+
+plot(1:length(data_reduced$category), clean_data$energy, type = "n", xaxt = "n",xlab="date", ylab = "energy", main = "Evolution of Energy Prices Index over time")
+axis(1, at = 1:length(data_reduced$category), labels = data_reduced$category)
+lines(1:length(data_reduced$category), data_reduced$energy, type = "o", col = "blue", pch = 16)
+
+plot(1:length(data_reduced$category), clean_data$industrial_prod, type = "n", xaxt = "n",xlab="date", ylab = "Industry production", main = "Evolution of Industrial Production Index over time")
+axis(1, at = 1:length(data_reduced$category), labels = data_reduced$category)
+lines(1:length(data_reduced$category), data_reduced$industrial_prod, type = "o", col = "blue", pch = 16)
+}
 ```
 
 # Covariance and correlation
 
-We present the correlation and covariance of the used variables in aims to understand its relations.
+Now we present the covariance and correlation between the variables of the dataset in order to understand the strength of their linear relation. In particular we show in the following table the result for the correlation of the variables with respect to our variable y (Housing Prices Index):
+
+| Variable                   | Correlation with Housing Prices Index |
+|----------------------------|---------------------------------------|
+| Industrial_inputs          | 0.1786                                |
+| metals                     | 0.2442                                |
+| energy                     | -0.0339                               |
+| shipping                   | 0.6880                                |
+| fx                         | 0.7649                                |
+| unemployment               | -0.0114                               |
+| industrial_prod            | 0.9447                                |
+| interest_rate              | -0.2695                               |
+| construction_licences_area | 0.2864                                |
+| finished_constructions     | 0.1637                                |
+| google_trends              | 0.9318                                |
+
+From the results we see a strong positive relationship between the house price index and the google trend one,a more moderate one with the shipping price index and the fx indicator. While the weaker relationships are found with the energy price index and the unemployment rate.
 
 ```{r}
 # Identify columns that do not contain "log"
