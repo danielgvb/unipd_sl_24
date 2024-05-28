@@ -247,6 +247,8 @@ Continuing with the exploratory analysis we plot the variable of Home Price Inde
 
 ```{r}
 # reset margins
+# Reset margins to default values
+par(mar = c(5.1, 4.1, 4.1, 2.1))
 par(mfrow = c(1, 1))
 
 # dependent variable
@@ -366,7 +368,8 @@ We plot these four variables to see its evolution through time
 # reset margins
 
 # Reset layout
-
+# Reset margins to default values
+par(mar = c(5.1, 4.1, 4.1, 2.1))
 par(mfrow = c(3, 1))
 
 # dependent variable
