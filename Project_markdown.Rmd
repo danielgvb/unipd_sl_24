@@ -14,7 +14,7 @@ In this project we aim to study the influence of macroeconomics indicators on th
 The dataset was constructed gattering information from multiple sites: the Colombian department of statistics (DANE) , the Colombian central bank (Banco de la Repúlbica), Google trends and the Federal Reserve Economic Data (FRED). In general, all the visited sites present the data as a .csv file with tables according to filters related with the time span of interest. With this we construct a consolidated database un .csv format with the following variables:
 
 | Variable                   | Description                                                                                                    |
-|-----------------------|-------------------------------------------------|
+|------------------------|------------------------------------------------|
 | House Price Index (y)      | Measure of the average change in the residential properties price as an index                                  |
 | Industrial_inputs          | Measure of the average changes in the industry input costs as an index                                         |
 | metals                     | Measure of the average price change in metal costs excluding gold as an index                                  |
@@ -174,7 +174,7 @@ filtered_df_shipping
 # Create a pairs plot excluding columns C and D
 ```
 
-#Outliers based on the IQR 
+#Outliers based on the IQR
 
 As an initial step to better understand the data and its behavior we find the outliers of each one of the variables using the IQR to select those points outside the bounds. As a result we found that the variables that present the most quantity of outliers are the shipping, the interest rate and the unemployment.
 
@@ -207,7 +207,9 @@ print(outliers_list)
 
 
 ```
+
 We present the box plot for the variables with the highest quantity of outliers
+
 ```{r}
 # Create the boxplot without x-axis labels
 
@@ -220,9 +222,6 @@ boxplot(data_reduced$unemployment, horizontal=TRUE  ,frame=F,main = "Unmeploymen
 boxplot(data_reduced$interest_rate, horizontal=TRUE  ,frame=F,main = "Interest rate")
 }
 ```
-
-
-
 
 #Ploting the Home Price Index
 
@@ -345,7 +344,7 @@ text(x = 1:length(labels), y = par("usr")[3] - 0.5, labels = labels, srt = 45, a
 
 ```
 
-We plot these four variables to see its evolution through time. It is possible to see that the industrial production Index and the Shipping price Index have an increase tendency while the energy price  have a less defined behavior over time with certain peaks in specific years like 2008 and 2022
+We plot these four variables to see its evolution through time. It is possible to see that the industrial production Index and the Shipping price Index have an increase tendency while the energy price have a less defined behavior over time with certain peaks in specific years like 2008 and 2022
 
 ```{r}
 # reset margins
@@ -375,6 +374,7 @@ lines(1:length(data_reduced$category), data_reduced$industrial_prod, type = "o",
 # Log-transformation
 
 We apply a log transformation with the intention of normalize the data as some variables are index that change over time and others area real values in a wide range. Our idea is to reduce the variability of the data, compressing the scale and helping to linearize those relationships between the variables for the interpretability of the results in the models. We apply log transformation to all variables except those that are already percentages: the unemployment rate and the interest rate.
+
 ```{r}
 # Create new log-transformed variables
 data_reduced <- data_reduced %>%
@@ -390,7 +390,6 @@ data_final <- data_reduced %>%
          construction_licences_area_log, finished_constructions_log,google_trends_log,
          unemployment, interest_rate)
 ```
-
 
 # Covariance and correlation
 
@@ -410,7 +409,7 @@ Now we present the covariance and correlation between the variables of the datas
 | finished_constructions     | 0.1637                                |
 | google_trends              | 0.9318                                |
 
-From the results we see a strong positive relationship between the house price index and the google trend one,a more moderate one with the shipping price index and the fx indicator. While the weaker relationships are found with the energy price index and the unemployment rate. These correlation serve as a point of reference for the linear regression models that we implement in the corresponding section. Also, we found a high positive correlation between the metal price index and the industrial inputs.   
+From the results we see a strong positive relationship between the house price index and the google trend one,a more moderate one with the shipping price index and the fx indicator. While the weaker relationships are found with the energy price index and the unemployment rate. These correlation serve as a point of reference for the linear regression models that we implement in the corresponding section. Also, we found a high positive correlation between the metal price index and the industrial inputs.
 
 ```{r}
 # Identify columns that do not contain "log"
@@ -424,13 +423,15 @@ df_not_log <- data_reduced[, columns_to_keep]
 
 # Display the filtered dataframe
 print(df_not_log)
+numeric_columns <- select_if(df_not_log, is.numeric)
+```
 
 
-
-cov_matrix <- cov(select(df_not_log,-date))
+```{r}
+cov_matrix <- cov(numeric_columns)
 cov_matrix
 
-correl_matrix <- cor(select(df_not_log,-date))
+correl_matrix <- cor(numeric_columns)
 correl_matrix
 # Heatmap of correl
 
@@ -444,7 +445,7 @@ axis(2, at = 1:ncol(correl_matrix), labels = colnames(correl_matrix), las = 2)}
 
 
 # Correlation matrix
-cor_matrix <- cor(select(df_not_log,-date,-category), use = "complete.obs")
+cor_matrix <- cor(numeric_columns, use = "complete.obs")
 print(cor_matrix)
 
 # Visualize the correlation matrix
@@ -454,7 +455,7 @@ heatmap(cor_matrix, symm = TRUE)
 
 # Multicolinearity Check
 
-Now present a multicollinearity test in top of the results related with the correlation of the variables in relation with the dependent variable of House Price Index. We first calculate the VIF for each predictor variable. We found that some variables like Shipping, Industrial Production Index, Metals Price Index and Industrial Inputs present a high VIF. At this point we consider to remove the Metals Price Index as they show a strong correlation with Industrial Inputs, they are have a similar behaviour and at the end the metal sector is consider on the Indsutrial Inputs Index.  
+Now present a multicollinearity test in top of the results related with the correlation of the variables in relation with the dependent variable of House Price Index. We first calculate the VIF for each predictor variable. We found that some variables like Shipping, Industrial Production Index, Metals Price Index and Industrial Inputs present a high VIF. At this point we consider to remove the Metals Price Index as they show a strong correlation with Industrial Inputs, they are have a similar behaviour and at the end the metal sector is consider on the Indsutrial Inputs Index.
 
 ```{r}
 # here a value bigger than 10 is supposed to have high multicolinearity 
@@ -492,21 +493,24 @@ vif(lm(y_log ~ ., data = data_final))
 
 ## Modelling the data
 
-We start with a simple regression model for the data, remember that this process will be executed with the variables after the log normalization. In this first iteration we consider all the explanatory variables. 
+We start with a simple regression model for the data, remember that this process will be executed with the variables after the log normalization. In this first iteration we consider all the explanatory variables.
 
 ```{r}
 # OLS 1 Log-Log-----------------
 # Perform linear regression
-model <- lm(y_log ~ ., data = data_final)  # Replace 'Y' with the dependent variable name
+model <- lm(y_log ~ ., data = data_final)  
 summary(model)
 ```
-In this first model we see a high R-squared, this mean that the model is powerful in terms of explain the variance in the House Price Index, but the model is no completely satisfactory as it includes several predictors without statistical significance, and other with different degree of signifance as industrial production, google trends and interest rate. This can be explain because the R-squared statistic will always increase when more variables are added to the model.  
+
+In this first model we see a high R-squared, this mean that the model is powerful in terms of explain the variance in the House Price Index, but the model is no completely satisfactory as it includes several predictors without statistical significance, and other with different degree of signifance as industrial production, google trends and interest rate. This can be explain because the R-squared statistic will always increase when more variables are added to the model.
+
 ```{r}
 # Post estimation Model 1----------------
 # See standard R plots
 plot(model)
 ```
-After having the model we fit it to evaluate its performance. First we determine the MSE which has a value of 0.001106908 suggesting the the predictions are close to the actual values. 
+
+After having the model we fit it to evaluate its performance. First we determine the MSE which has a value of 0.001106908 suggesting the the predictions are close to the actual values.
 
 ```{r}
 # Predict and evaluate the model on the test set
@@ -518,7 +522,8 @@ mse <- mean((predictions - actuals)^2)
 print(mse)
 plot(actuals,predictions)
 ```
-Then we plot the residuals Histogram and QQ plot. The histogram shows an approximately normally distribution centered around zero. However, the QQ plot show some deviations outside the reference line.   
+
+Then we plot the residuals Histogram and QQ plot. The histogram shows an approximately normally distribution centered around zero. However, the QQ plot show some deviations outside the reference line.
 
 ```{r}
 # checking properties of the residuals
@@ -533,9 +538,6 @@ par(mfrow = c(2, 1))
 qqnorm(residuals, main = "QQ Plot of Residuals", col ='blue')
 qqline(residuals, col = "red")}
 ```
-
-
-
 
 ```{r}
 # Do Test of normality to residuals
@@ -574,7 +576,9 @@ abline(h = 2*mean(hatvalues(model)), col="red")}  # Common threshold line
 
 
 ```
+
 # Drop variables according to their significance
+
 After the first iteration we consider the process of eliminating variables based on its significance to the model. The first variable that we consider to discard is the Energy Price Index, for this we proceed with an ANOVA F-test for the comparison of regression models. As the obtained value is 0.1328 is greater than 0.05 the Energy Price Index is not a significant predictor in the rpesence of the other variables. With this we remove it
 
 ```{r}
@@ -586,8 +590,8 @@ summary(full.mod)
 red.mod <- update(full.mod, . ~ . -energy_log)
 anova(red.mod, full.mod)
 ```
-We observe again the significance of the variables, and the next no significant variables that we decide to drop were Industrial Inputs Index, Finished Constructions, Construction Licence Area and Unemployment. Al of this after eliminating step by step each one following the previous procedure with the ANOVA F-test untill all the predictors were significative.  
 
+We observe again the significance of the variables, and the next no significant variables that we decide to drop were Industrial Inputs Index, Finished Constructions, Construction Licence Area and Unemployment. All of this after eliminating step by step each one following the previous procedure with the ANOVA F-test untill all the predictors were significative.
 
 ```{r}
 # This value indicates the significance level of the F-statistic.
@@ -622,7 +626,8 @@ anova(red.mod4, red.mod5)
 summary(red.mod5)
 # Post estimation 2--------------
 ```
-The final reduced model continue to show a high R-squared, while the QQ-Plot shows more points outside the reference line. At this point even the fact that now all the variables are significative the model appears to has less explanatory power as the histogram of the residuals show a more skewed behavior even though it is centered in zero. 
+
+The final reduced model continue to show a high R-squared, while the QQ-Plot shows more points outside the reference line. At this point even the fact that now all the variables are significative the model appears to has less explanatory power as the histogram of the residuals show a more skewed behavior even though it is centered in zero.
 
 ```{r}
 residuals_red     <- residuals(red.mod5)
@@ -638,6 +643,13 @@ qqline(residuals_red, col = "red")}
 # They look approximately normal
 ```
 
+```{r}
+# Plot residuals vs fitted values
+{plot(fitted(red.mod5), residuals(red.mod5),
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residuals vs Fitted Values")
+abline(h = 0, col = "red")}
+```
 
 ```{r}
 # Do Test of normality to residuals
@@ -683,15 +695,55 @@ abline(h = 4/(nrow(data_final)-length(coef(red.mod5))), col="red")}  # Common th
 abline(h = 2*mean(hatvalues(red.mod5)), col="red")}  # Common threshold line
 ```
 
-This is the process made with the laggedy value with the intention of reduce the Homoskedasticity but it does not work so good
+#Correction of the model with lagged value
+
+As we continue tosee some variability in the residuals, we decided to use a lagged version of the dependent variable as an explanatory variable. This can help to account for the lagged effects between the variables.
 
 ```{r}
 # Homoskedasticity
 
 # 
 # # Check for Homoskedasticity
-# plot(fitted(red.mod3), residuals(red.mod3), main="Residuals vs Fitted")
-# abline(h=0, col="red")
+{plot(fitted(red.mod5), residuals(red.mod5), main="Residuals vs Fitted")
+abline(h=0, col="red")}
+
+data_final_with_lag <- data_final %>%
+  mutate(y_log_lag1 = lag(y_log, n = 1))
+
+data_final_with_lag <- na.omit(data_final_with_lag)
+
+model_lag <- lm(y_log ~ y_log_lag1+fx_log + 
+                industrial_prod_log  + 
+                google_trends_log+  
+                interest_rate, data = data_final_with_lag)  
+summary(model_lag)
+#shipping_log
+```
+
+After include the lagged effect we consider the reduced model showing a high R-squared. Then we proceed to show the histogram of the residuals and their QQ plot. From the histogram it is possible to see that now the residuals show a more
+
+```{r}
+residuals_red     <- residuals(model_lag)
+
+# Histogram of residuals
+par(mar = c(5.1, 4.1, 4.1, 2.1))
+par(mfrow = c(2, 1))
+{hist(residuals(model_lag), breaks = 30, main = "Residuals Histogram Reduced Model")
+
+# Plot QQ plot and histogram for residuals
+qqnorm(residuals_red, main = "QQ Plot of Residuals", col ='blue')
+qqline(residuals_red, col = "red")}
+```
+
+```{r}
+# Plot residuals vs fitted values
+{plot(fitted(model_lag), residuals(model_lag),
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residuals vs Fitted Values")
+abline(h = 0, col = "red")}
+```
+
+```{r}
 # 
 # # Breusch-Pagan Test
 # 
@@ -713,10 +765,10 @@ This is the process made with the laggedy value with the intention of reduce the
 # # Check type of autocorrelation
 # 
 # # Plot ACF of residuals
-# acf(residuals_red, main = "ACF of Regression Residuals")
+#acf(residuals_red, main = "ACF of Regression Residuals")
 # 
 # # Plot PACF of residuals
-# pacf(residuals_red, main = "PACF of Regression Residuals")
+#pacf(residuals_red, main = "PACF of Regression Residuals")
 # 
 # # According to these plots, we should include the lagged y in our model
 # # to account for the ARIMA nature of the timeseries
@@ -835,7 +887,7 @@ This is the process made with the laggedy value with the intention of reduce the
 # abline(h=c(-2, 2), col="red")
 ```
 
-This process consider the model with robust std erros, we could think in leave it or notn as we did not see it on class. 
+This process consider the model with robust std errors, we could think in leave it or not as we did not see it on class.
 
 ```{r}
 # OLS Robust STD Errors--------------
@@ -871,7 +923,7 @@ print(robust_se)
 
 # Forward AIC Selection
 
-Implement the forward selection based on the AIC obtained by the scores
+We Implement the forward selection based on the AIC obtained by the scores. The AIC approach allows a model comparison with the intention to find a good balance between the model fit and the complexity. The process of forward selection stars with no predictors and adding one by one. In thes case we have a no significative predictor the Industrial Inputs Index, this happens because with the AIC criterion is possible to obtain non-significant predictors if their inclusion improves the general performance of the model.
 
 ```{r}
 # Forward AIC Stepwise selection-------------
@@ -893,9 +945,22 @@ forward_model <- step(null_model,
 summary(forward_model)
 ```
 
+```{r}
+residuals_red     <- residuals(forward_model)
+
+# Histogram of residuals
+par(mar = c(5.1, 4.1, 4.1, 2.1))
+par(mfrow = c(2, 1))
+{hist(residuals(forward_model), breaks = 30, main = "Residuals Histogram Reduced Model")
+
+# Plot QQ plot and histogram for residuals
+qqnorm(residuals_red, main = "QQ Plot of Residuals", col ='blue')
+qqline(residuals_red, col = "red")}
+```
+
 # Backward AIC selection
 
-Implement the backward selection based on the AIC obtained by the scores
+We implement the backward selection based also based in the AIC obtained by the different models. In this case, contrary to forward selection, all the variables left were in the reduced model obtained by leaving only the most significative variables.¿, so for this case the results are the same obtained before.
 
 ```{r}
 # Backward AIC Stepwise selection-------------
@@ -923,12 +988,6 @@ summary(backward_model)
 ```{r}
 # Regularization------------
 # Done over full model
-#install.packages("glmnet")
-#install.packages("caret")
-#install.packages("Metrics")
-
-
-
 # Load the packages
 library(glmnet)
 library(caret)
@@ -982,6 +1041,21 @@ lasso_coefficients <- coef(lasso_model, s = lasso_best_lambda)
 print(lasso_coefficients)
 ```
 
+```{r}
+lasso_residuals <- y_test - lasso_predictions
+# Plot predicted vs actual values
+{plot(y_test, lasso_predictions, 
+     xlab = "Actual Values", ylab = "Predicted Values", 
+     main = "Predicted vs Actual Values")
+abline(0, 1, col = "red")  # Add a line y = x for reference
+}
+```
+
+```{r}
+{qqnorm(lasso_residuals)
+qqline(lasso_residuals, col = "red")}
+```
+
 # Ridge regression model
 
 ```{r}
@@ -998,12 +1072,28 @@ cat("Ridge Regression R2:", ridge_r2, "\n")
 ridge_coefficients <- coef(ridge_model, s = ridge_best_lambda)
 print(ridge_coefficients)
 
-# Compare the results
+```
+
+```{r}
+ridge_residuals <- y_test - ridge_predictions
+# Plot predicted vs actual values
+{plot(y_test, ridge_predictions, 
+     xlab = "Actual Values", ylab = "Predicted Values", 
+     main = "Predicted vs Actual Values")
+abline(0, 1, col = "red")  # Add a line y = x for reference
+}
+```
+
+```{r}
+{qqnorm(ridge_residuals)
+qqline(ridge_residuals, col = "red")}
+```
+
+```{r}
 results <- data.frame(
   Model = c("Linear Regression", "LASSO Regression", "Ridge Regression"),
   MSE = c(lm_mse, lasso_mse, ridge_mse),
   R2 = c(lm_r2, lasso_r2, ridge_r2)
 )
-
 print(results)
 ```
