@@ -107,7 +107,7 @@ We proceed to remove the left rows with NA values eliminating from the dataset t
 
 ```{r}
 # Removing rows with any NA values
-clean_data <- na.omit(data)
+clean_data <- na.omit(data_filled)
 
 # Drop columns ------------
 
@@ -123,74 +123,28 @@ summary_stats <- summary(select(data_reduced,-date))
 
 # Print the summary statistics
 #print(summary_stats)
+
+
 ```
 
-| Variable                      | Min    | 1st Qu. | Median | Mean  | 3rd Qu. | Max    |
-|-------------------------------|--------|---------|--------|-------|---------|--------|
-| Home_Price_Index              | 87.53  | 111.17  | 158.02 | 147.84| 180.79  | 203.50 |
-| Industrial_Inputs_Index       | 82.63  | 118.00  | 133.95 | 137.42| 158.04  | 210.75 |
-| Metals_Price_Index            | 78.87  | 121.60  | 141.59 | 145.37| 170.82  | 233.75 |
-| Energy_Price_Index            | 72.99  | 128.96  | 161.54 | 173.97| 223.62  | 331.78 |
-| Shipping_Price_Index          | -213.5 | 243.7   | 262.8  | 279.8 | 294.3   | 478.3  |
-| Forex_Index                   | 0.1712 | 1.1934  | 2.376  | 2.671| 3.196   | 4.788  |
-| Unemployment_Rate             | 0.08499| 0.09684 | 0.10490| 0.10853| 0.11402| 0.20359|
-| Industrial_Production_Index   | 62.19  | 79.09   | 96.86  | 95.27 | 108.54  | 132.46 |
-| Interest_Rate                 | -0.0175| 0.03844 | 0.04512| 0.05494| 0.06688| 0.13250|
-| Construction_Licences_Area    | 675268 | 958182  | 1260614| 1276163| 1452165 | 2883878|
-| Finished_Constructions        | 1413931| 2329601 | 2554152| 2618787| 2886264 | 4007432|
-| Google_Trends_Housing         | 17.50  | 22.50   | 33.25  | 34.59 | 45.38   | 63.00  |
+
+| Statistic    | Min    | 1st Qu. | Median | Mean   | 3rd Qu. | Max    |
+|--------------|--------|---------|--------|--------|---------|--------|
+| Home_Price_Index            | 87.35  | 110.50  | 157.92  | 147.71 | 180.88  | 203.50 |
+| Industrial_Inputs_Index     | 78.67  | 116.02  | 136.26  | 137.78 | 157.65  | 221.14 |
+| Metals_Price_Index          | 74.89  | 121.21  | 143.74  | 145.88 | 172.53  | 234.53 |
+| Energy_Price_Index          | 55.89  | 128.19  | 162.61  | 173.36 | 223.35  | 376.41 |
+| Shipping_Price_Index        | -213.3 | 242.2   | 262.1   | 280.7  | 294.1   | 478.3  |
+| Forex_Index                 | 0.1712 | 1.1934  | 2.3762  | 2.6762 | 3.2021  | 4.9223 |
+| Unemployment_Rate           | 0.07563| 0.09728 | 0.10970 | 0.11240| 0.12099 | 0.21972|
+| Industrial_Production_Index | 59.82  | 77.94   | 94.44   | 92.87  | 104.85  | 132.46 |
+| Interest_Rate               | 0.01750| 0.03860 | 0.04525 | 0.05551| 0.06994 | 0.13250|
+| Construction_Licences_Area  | 233210 | 969559  | 1156424 | 1205587| 1373585 | 2883878|
+| Finished_Constructions      | 471310 | 775374  | 848663  | 871488 | 962168  | 1335811|
+| Google_Trends_Housing       | 16.00  | 23.50   | 34.75   | 36.04  | 47.62   | 64.00  |
 
 # Exploratory Analysis
 
-# Outliers based on z scores (Eliminate?)
-
-As a first step on the exploratory analysis we identify the outliers presented in the data (At this moment this analysis was implemented considering a z score fitting a distribution over the time series, at least they allow to see some outliers like the pick presented in the 2022 due to external effects)
-
-```{r, echo = FALSE}
-# Hacer interquartil range
-# see outliers based on z scores
-# 
-# df_with_z_scores <- data_reduced %>%
-#   mutate(across(where(is.numeric), ~ scale(.), .names = "z_{col}"))
-# 
-# # Identify outliers
-# outlier_threshold <- 3
-# df_with_outliers <- df_with_z_scores %>%
-#   mutate(across(starts_with("z_"), ~ abs(.) > outlier_threshold, .names = "outlier_{col}"))
-# 
-# # Print data frame with Z-scores and outliers identified
-# print(df_with_outliers)
-# 
-# outlier_counts <- df_with_outliers %>%
-#   summarise(across(starts_with("outlier_"), ~ sum(. == TRUE), .names = "count_{col}"))
-# 
-# # Print the counts
-# outlier_counts
-# 
-# # print the row that has outliers
-# # Filter the data frame where "outlier_z_energy" is TRUE
-# filtered_df <- df_with_outliers %>%
-#   filter(outlier_z_energy == TRUE | outlier_z_shipping == TRUE)
-# 
-# head(filtered_df)
-# 
-# # Filter original df to see when it was
-# filtered_df_energy <- clean_data %>%
-#   filter(energy > 370)
-# 
-# filtered_df_energy
-# 
-# # see high values of shipping when happend
-# filtered_df_shipping <- clean_data %>%
-#   filter(shipping > 468)
-# 
-# filtered_df_shipping
-
-# It was aug 2022-dec 2022, peak inflation wave, war on Ukraine and,
-# preocupation of winter in Europe, makes sense to leave it
-
-# Create a pairs plot excluding columns C and D
-```
 
 # Outliers based on the IQR
 
@@ -221,7 +175,7 @@ for (var in colnames(select(data_reduced,-date))) {
 }
 
 # Print outliers for each variable
-#print(outliers_list)
+print(outliers_list)
 
 
 ```
@@ -259,7 +213,7 @@ boxplot(data_reduced$Interest_Rate, horizontal=TRUE  ,frame=F,main = "Interest R
 
 Continuing with the exploratory analysis we plot the variable of Home Price Index to see its behavior through time. It is possible to see a clear increase tendency starting from the year 2005 until the year 2021, then a little decay was recorded.
 
-```{r,echo = FALSE,fig.width=5, fig.height=3,fig.align='center'}
+```{r,echo = FALSE,fig.width=6, fig.height=4,fig.align='center'}
 # reset margins
 # Reset margins to default values
 par(mar = c(5, 4, 4, 2) + 0.1)
@@ -268,7 +222,7 @@ par(mfrow = c(1, 1))
 # dependent variable
 data_reduced$category <- as.factor(clean_data$date)
 # Set up the plot without drawing the points
-{plot(1:length(data_reduced$category), clean_data$Home_Price_Index, type = "n", xaxt = "n",xlab="date", ylab = "Home Price Index", main = "Evolution of Home Prices over time")
+{plot(1:length(data_reduced$category), clean_data$Home_Price_Index, type = "n", xaxt = "n",xlab="date", ylab = "Home Price Index", main = "Evolution of Home Prices over time",cex.axis=0.8)
 
 # Add the categorical labels to the x-axis
 axis(1, at = 1:length(data_reduced$category), labels = data_reduced$category)
@@ -316,26 +270,51 @@ for (var in variables_to_calculate) {
 ```{r,echo = FALSE,fig.width=9, fig.height=4,fig.align='center'}
 # Histograms/Boxplots of the percentual variations
 # Subset only percentual changes
-data_percentual_variation <- data_percentual_variation %>%
-  select(pct_var_Home_Price_Index, pct_var_Industrial_Inputs_Index, pct_var_Metals_Price_Index, pct_var_Energy_Price_Index,
-         pct_var_Shipping_Price_Index, pct_var_Forex_Index,pct_var_Industrial_Production_Index,
-         pct_var_Construction_Licences_Area, pct_var_Finished_Constructions,
-         pct_var_Google_Trends_Housing,
-         Unemployment_Rate, Interest_Rate)
+columns_to_select <- c("pct_var_Home_Price_Index", "pct_var_Industrial_Inputs_Index", "pct_var_Metals_Price_Index", 
+                       "pct_var_Energy_Price_Index", "pct_var_Shipping_Price_Index", "pct_var_Forex_Index", 
+                       "pct_var_Industrial_Production_Index", "pct_var_Construction_Licences_Area", 
+                       "pct_var_Finished_Constructions", "pct_var_Google_Trends_Housing", 
+                       "Unemployment_Rate", "Interest_Rate")
+
+data_percentual_variation <- data_percentual_variation[, columns_to_select]
+
+data_percentual_variation$time_index<- seq(1,nrow(data_percentual_variation))
 
 
 # Y
 {
+# Set the plot parameters
 par(mar = c(5, 4, 4, 2) + 0.1)
 par(mfrow = c(1, 2))
-boxplot(data_percentual_variation$pct_var_Home_Price_Index , horizontal=TRUE  ,frame=F,main = "Boxplot of Percentual Variation Home Price Index")
-hist(data_percentual_variation$pct_var_Home_Price_Index , breaks=40,main = "Histogram of Percentual Variation Home Price Index",xlab = "Percentual Variation")}
+
+# Boxplot with color scale for time index
+boxplot(data_percentual_variation$pct_var_Home_Price_Index, horizontal = TRUE, frame = FALSE, 
+        main = "Boxplot of Percentual Variation Home Price Index", 
+        ylab = "Percentual Variation", xlab = "", col = "lightgray", border = "black")
+
+# Generate color scale based on time index
+colors <- colorRampPalette(c("green", "red"))(length(data_percentual_variation$time_index))
+colored_points <- colors[rank(data_percentual_variation$time_index)]
+
+# Overlay points on the boxplot
+points(data_percentual_variation$pct_var_Home_Price_Index, rep(1, nrow(data_percentual_variation)), 
+       col = colored_points, pch = 19)
+
+# Add a legend for the color scale
+legend("topright", legend = c("Oldest", "Newest"), 
+       fill = c(colors[1], colors[length(colors)]), title = "Time Index")
+
+# Histogram of Percentual Variation Home Price Index
+hist(data_percentual_variation$pct_var_Home_Price_Index, breaks = 40, 
+     main = "Histogram of Percentual Variation Home Price Index", 
+     xlab = "Percentual Variation")}
 ```
 
 We did a similar procedure for the rest of the variables with respect to their percentual variation
 
 ```{r,echo = FALSE}
 
+data_percentual_variation$time_index<-NULL
 # Histograms-----------------
 par(mar = c(2, 2, 2, 2))  # Adjust margins to make them smaller
 
@@ -353,37 +332,37 @@ for (i in 1:ncol(data_percentual_variation)) {
 For an easier interpretation we plot the boxplot for the percentual variation of each variable in a same graph. This plot shows that the index variables with a high variability in percentual variation are the shipping index price and the energy index price. Also, the index variable that show less variability in the percentual variation is the one related with the industrial production.
 
 ```{r,echo = FALSE,fig.width=6, fig.height=6}
-# Reset layout
-par(mfrow = c(1, 1))
-
-#pairs(data_percentual_variation)
-
-# Boxplot for all at once
-#install.packages("reshape2")
-library(reshape2)
-# Melt the dataframe to long format
-# Melt the dataframe to long format
-data_long <- melt(data_percentual_variation)
-
-# Adjust graphical parameters
-
-
-# Create the boxplot without x-axis labels
-{par(mar = c(5, 5, 4, 2) + 0.1)  
-  boxplot(value ~ variable, data = data_long,
-        main = "Boxplot of Multiple Variables",
-        xlab = "", ylab = "Value",
-        col = "lightblue", border = "darkblue", xaxt = 'n')
-
-# Add custom x-axis labels at a 45-degree angle
-labels <- levels(data_long$variable)
-text(x = 1:length(labels), y = par("usr")[3] - 0.5, labels = labels, srt = 45, adj = 1, xpd = TRUE, cex = 0.8)
-}
-
-# Reset graphical parameters to default
-#par(mar = c(5, 4, 4, 2) + 0.1)
-# This one goes in the report, not so much variability in prices even a lot in X vars
-
+# # Reset layout
+# par(mfrow = c(1, 1))
+# 
+# #pairs(data_percentual_variation)
+# 
+# # Boxplot for all at once
+# #install.packages("reshape2")
+# library(reshape2)
+# # Melt the dataframe to long format
+# # Melt the dataframe to long format
+# data_long <- melt(data_percentual_variation)
+# 
+# # Adjust graphical parameters
+# 
+# 
+# # Create the boxplot without x-axis labels
+# {par(mar = c(5, 5, 4, 2) + 0.1)  
+#   boxplot(value ~ variable, data = data_long,
+#         main = "Boxplot of Multiple Variables",
+#         xlab = "", ylab = "Value",
+#         col = "lightblue", border = "darkblue", xaxt = 'n')
+# 
+# # Add custom x-axis labels at a 45-degree angle
+# labels <- levels(data_long$variable)
+# text(x = 1:length(labels), y = par("usr")[3] - 0.5, labels = labels, srt = 45, adj = 1, xpd = TRUE, cex = 0.8)
+# }
+# 
+# # Reset graphical parameters to default
+# #par(mar = c(5, 4, 4, 2) + 0.1)
+# # This one goes in the report, not so much variability in prices even a lot in X vars
+# 
 
 ```
 
@@ -411,27 +390,7 @@ lines(1:length(data_reduced$category), data_reduced$Industrial_Production_Index,
 }
 ```
 
-# Log-transformation
 
-We apply a log transformation with the intention of normalize the data as some variables are index that change over time and others area real values in a wide range. Our idea is to reduce the variability of the data, compressing the scale and helping to linearize those relationships between the variables for the interpretability of the results in the models. We apply log transformation to all variables except those that are already percentages: the unemployment rate and the interest rate.
-```{r}
-#Log transformation of the variables
-variables_to_log <- c("Home_Price_Index", "Industrial_Inputs_Index", "Metals_Price_Index",
-                      "Energy_Price_Index", "Shipping_Price_Index", "Forex_Index",
-                      "Industrial_Production_Index", "Construction_Licences_Area",
-                      "Finished_Constructions", "Google_Trends_Housing")
-
-
-for (var in variables_to_log) {
-  log_var_name <- paste0(var, "_log")
-  data_reduced[[log_var_name]] <- log(data_reduced[[var]])
-}
-
-# Subset the dataframe
-selected_columns <- c(paste0(variables_to_log, "_log"), "Unemployment_Rate", "Interest_Rate")
-data_final <- data_reduced[, selected_columns]
-
-```
 
 
 
@@ -441,17 +400,17 @@ Now we present the covariance and correlation between the variables of the datas
 
 | Variable                   | Correlation with Housing Prices Index |
 |----------------------------|---------------------------------------|
-| Industrial_inputs          | 0.1786                                |
-| metals                     | 0.2442                                |
-| energy                     | -0.0339                               |
-| shipping                   | 0.6880                                |
-| fx                         | 0.7649                                |
-| unemployment               | -0.0114                               |
-| industrial_prod            | 0.9447                                |
-| interest_rate              | -0.2695                               |
-| construction_licences_area | 0.2864                                |
-| finished_constructions     | 0.1637                                |
-| google_trends              | 0.9318                                |
+| Industrial_inputs          | 0.1711                                |
+| metals                     | 0.2371                                |
+| energy                     | -0.0337                               |
+| shipping                   | 0.6810                                |
+| fx                         | 0.7599                                |
+| unemployment               | -0.0047                               |
+| industrial_prod            | 0.9418                               |
+| interest_rate              | -0.2435                               |
+| construction_licences_area | 0.2597                                |
+| finished_constructions     | 0.1519                                |
+| google_trends              | 0.9313                                |
 
 From the results we see a strong positive relationship between the house price index and the google trend one,a more moderate one with the shipping price index and the fx indicator. While the weaker relationships are found with the energy price index and the unemployment rate. These correlation serve as a point of reference for the linear regression models that we implement in the corresponding section. Also, we found a high positive correlation between the metal price index and the industrial inputs.
 
@@ -493,7 +452,27 @@ axis(1, at = 1:ncol(correl_matrix), labels = colnames(correl_matrix), las = 2)
 axis(2, at = 1:ncol(correl_matrix), labels = colnames(correl_matrix), las = 2)}
 ```
 
+# Log-transformation
 
+We apply a log transformation with the intention of normalize the data as some variables are index that change over time and others area real values in a wide range. Our idea is to reduce the variability of the data, compressing the scale and helping to linearize those relationships between the variables for the interpretability of the results in the models. We apply log transformation to all variables except those that are already percentages: the unemployment rate and the interest rate.
+```{r}
+#Log transformation of the variables
+variables_to_log <- c("Home_Price_Index", "Industrial_Inputs_Index", "Metals_Price_Index",
+                      "Energy_Price_Index", "Shipping_Price_Index", "Forex_Index",
+                      "Industrial_Production_Index", "Construction_Licences_Area",
+                      "Finished_Constructions", "Google_Trends_Housing")
+
+
+for (var in variables_to_log) {
+  log_var_name <- paste0(var, "_log")
+  data_reduced[[log_var_name]] <- log(data_reduced[[var]])
+}
+
+# Subset the dataframe
+selected_columns <- c(paste0(variables_to_log, "_log"), "Unemployment_Rate", "Interest_Rate")
+data_final <- data_reduced[, selected_columns]
+
+```
 
 
 # Multicolinearity Check
@@ -508,10 +487,10 @@ vif_values
 # Metals and industrial inputs are very similar / metals is a part of industrial inputs,
 # drop metals
 ```
-At this point we consider to remove the Metals Price Index as they show a strong correlation with Industrial Inputs, they both have a similar behavior and at the end the metal sector is consider on the Industrial Inputs Index. After this reduction we re run the VIF test.
+At this point we consider to remove the Metals Price Index as they show a strong correlation with Industrial Inputs, they both have a similar behavior and at the end the metal sector is consider on the Industrial Inputs Index. After this reduction we re run the VIF test. EN ESTE PUNTO HABLAR DE POR QUÉ DEJAR ALGUNAS AUNQUE TENGA VIF ALTO. 
 
 ```{r,echo=FALSE}
-data_final <- data_final[, !names(data_final) %in% "Metals_Price_Index_log"]
+data_final$Metals_Price_Index_log<- NULL
 
 # re run multicoliniarity
 
@@ -533,6 +512,44 @@ vif(lm(Home_Price_Index_log ~ ., data = data_final))
 # vif_values <- vif(lm(formula, data = data_final))
 # print(vif_values)
 ```
+# Train Test Split
+
+```{r}
+
+# # Sample data preparation
+# set.seed(123)  # For reproducibility
+# trainIndex <- createDataPartition(data_final$Home_Price_Index_log, p = .8, 
+#                                   list = FALSE, 
+#                                   times = 1)
+# data_train <- data_final[ trainIndex,]
+# data_test  <- data_final[-trainIndex,]
+# 
+# # Extract predictors and response
+# X_train <- model.matrix(Home_Price_Index_log ~ ., data_train)[, -1]  # Remove the intercept column
+# y_train <- data_train$Home_Price_Index_log
+# 
+# X_test <- model.matrix(Home_Price_Index_log ~ ., data_test)[, -1]  # Remove the intercept column
+# y_test <- data_test$Home_Price_Index_log
+
+# Sample data preparation
+set.seed(123)  # For reproducibility
+
+# Create a sample index for training data (80% of the data)
+trainIndex <- sample(seq_len(nrow(data_final)), size = 0.8 * nrow(data_final))
+
+# Split the data into training and testing sets
+data_train <- data_final[trainIndex, ]
+data_test <- data_final[-trainIndex, ]
+
+# Extract predictors and response for the training set
+X_train <- model.matrix(Home_Price_Index_log ~ ., data = data_train)[, -1] 
+y_train <- data_train$Home_Price_Index_log
+
+# Extract predictors and response for the testing set
+X_test <- model.matrix(Home_Price_Index_log ~ ., data = data_test)[, -1] 
+y_test <- data_test$Home_Price_Index_log
+```
+
 
 # Modelling the data
 
@@ -541,24 +558,32 @@ We start with a simple regression model for the data, remember that this process
 ```{r}
 # OLS 1 Log-Log-----------------
 # Perform linear regression
-model <- lm(Home_Price_Index_log ~ ., data = data_final)  
+model <- lm(Home_Price_Index_log ~ ., data = data_train)  
 summary(model)
 ```
 
 In this first model we see a high R-squared, this mean that the model is powerful in terms of explain the variance in the House Price Index, but the model is no completely satisfactory as it includes several predictors without statistical significance, and other with different degree of signifance as industrial production, google trends and interest rate. This can be explain because the R-squared statistic will always increase when more variables are added to the model.
 
-```{r,include=FALSE }
+```{r,include=FALSE,fig.width=7, fig.height=4}
 # Post estimation Model 1----------------
 # See standard R plots
-plot(model)
+{par(mfrow = c(1, 2))
+
+# Plot residuals vs fitted values
+plot(model, which = 1, main = "Residuals vs Fitted")
+
+# Plot QQ plot
+plot(model, which = 2, main = "Normal Q-Q")
+}
+
 ```
 
 After having the model we fit it to evaluate its performance. First we determine the MSE which has a value of 0.001106908 suggesting the the predictions are close to the actual values, this could be observed in the plot of the predicted vs the actual values which presents an approximately 45° degrees line.
 
 ```{r, echo=FALSE}
 # Predict and evaluate the model on the test set
-predictions <- predict(model, newdata = data_final)
-actuals <- data_final$Home_Price_Index_log
+predictions <- predict(model, newdata = data_test)
+actuals <- data_test$Home_Price_Index_log
 
 # Calculate evaluation metrics
 mse <- mean((predictions - actuals)^2)
@@ -568,55 +593,45 @@ plot(actuals,predictions)
 
 Then we plot the residuals Histogram and QQ plot. The histogram shows an approximately normally distribution centered around zero. However, the QQ plot show some deviations outside the reference line.
 
-```{r,echo=FALSE}
-# checking properties of the residuals
 
-residuals     <- residuals(model)
-y.hat <- fitted.values(model)
-sum(residuals)
-par(mar = c(5.1, 4.1, 4.1, 2.1))
-par(mfrow = c(1, 2))
-# Histogram of residuals
-{hist(residuals(model), breaks = 30, main = "Residuals Histogram")
-qqnorm(residuals, main = "QQ Plot of Residuals", col ='blue')
-qqline(residuals, col = "red")}
-```
+
+
 
 ```{r,include=FALSE}
-# Do Test of normality to residuals
-
-# For all these tests, the null hypothesis H0  is that the residuals are normally distributed.
-# pvalue > 0.05 -> Fail to reject the null hypothesis, suggesting that the residuals are normally distributed.
-# Perform Shapiro-Wilk test
-shapiro_test <- shapiro.test(residuals)
-print(shapiro_test)
-
-# Perform Kolmogorov-Smirnov test
-ks_test <- ks.test(residuals, "pnorm", mean = mean(residuals), sd = sd(residuals))
-print(ks_test)
-
-# Both p-values are > 0.05, so the residuals should be normal
-
-
-# Multicolinearity
-
-vif(model)
-# Shipping and Industrial production could be linearly correlated
-
-
-# Model fit
-summary(model)$r.squared
-
-
-# Influential plots
-# Cook's Distance Plot
-{plot(cooks.distance(model), main="Cook's Distance")
-abline(h = 4/(nrow(data_final)-length(coef(model))), col="red")}  # Common threshold line
-
-# Leverage Plot
-{plot(hatvalues(model), main="Leverage Values")
-abline(h = 2*mean(hatvalues(model)), col="red")}  # Common threshold line
-
+# # Do Test of normality to residuals
+# 
+# # For all these tests, the null hypothesis H0  is that the residuals are normally distributed.
+# # pvalue > 0.05 -> Fail to reject the null hypothesis, suggesting that the residuals are normally distributed.
+# # Perform Shapiro-Wilk test
+# shapiro_test <- shapiro.test(residuals)
+# print(shapiro_test)
+# 
+# # Perform Kolmogorov-Smirnov test
+# ks_test <- ks.test(residuals, "pnorm", mean = mean(residuals), sd = sd(residuals))
+# print(ks_test)
+# 
+# # Both p-values are > 0.05, so the residuals should be normal
+# 
+# 
+# # Multicolinearity
+# 
+# vif(model)
+# # Shipping and Industrial production could be linearly correlated
+# 
+# 
+# # Model fit
+# summary(model)$r.squared
+# 
+# 
+# # Influential plots
+# # Cook's Distance Plot
+# {plot(cooks.distance(model), main="Cook's Distance")
+# abline(h = 4/(nrow(data_final)-length(coef(model))), col="red")}  # Common threshold line
+# 
+# # Leverage Plot
+# {plot(hatvalues(model), main="Leverage Values")
+# abline(h = 2*mean(hatvalues(model)), col="red")}  # Common threshold line
+# 
 
 ```
 
@@ -627,14 +642,14 @@ After the first iteration we consider the process of eliminating variables based
 ```{r,echo=FALSE}
 # Variable Selection-----------
 # F-test for the comparison of nested models
-full.mod <- lm(Home_Price_Index_log ~ ., data = data_final)
+full.mod <- lm(Home_Price_Index_log ~ ., data = data_train)
 summary(full.mod)
 # Remove energy
 red.mod <- update(full.mod, . ~ . -Energy_Price_Index_log)
 anova(red.mod, full.mod)
 ```
 
-We observe again the significance of the variables, and the next no significant variables that we decide to drop were Industrial Inputs Index, Finished Constructions, Construction Licence Area and Unemployment. All of this after eliminating step by step each one following the previous procedure with the ANOVA F-test until all the predictors are significative.
+We observe again the significance of the variables, and the next no significant variables that we decide to drop were Industrial Inputs Index, Finished Constructions, Construction Licence Area and Unemployment. All of this after eliminating step by step each one following the previous procedure with the ANOVA F-test until all the predictors are significative. Justificar porque dejamos constructions licences aunque no es significativa
 
 ```{r,results='hide'}
 #Process of Variable dropping according to ther significance
@@ -653,314 +668,145 @@ anova(red.mod2, red.mod3)
 summary(red.mod3)
 # All predictors are statistically significant
 
-red.mod4 <- update(red.mod3, . ~ . -Construction_Licences_Area_log)
-anova(red.mod3, red.mod4)
+#red.mod4 <- update(red.mod3, . ~ . -Construction_Licences_Area_log)
+#anova(red.mod3, red.mod4)
 # Can safely remove constructions_licences_area_log
-summary(red.mod4)
+#summary(red.mod4)
 
-red.mod5 <- update(red.mod4, . ~ . -Unemployment_Rate)
-anova(red.mod4, red.mod5)
-# Can safely remove finished constructions (but makes no sense)
-summary(red.mod5)
 
 # All predictors are statistically significant
 ```
 
 ```{r,echo=FALSE}
-summary(red.mod5)
+summary(red.mod3)
 ```
 
 
+
+```{r,include=FALSE,fig.width=7, fig.height=4}
+# Post estimation Model 1----------------
+# See standard R plots
+{par(mfrow = c(1, 2))
+
+# Plot residuals vs fitted values
+plot(red.mod3, which = 1, main = "Residuals vs Fitted")
+
+# Plot QQ plot
+plot(red.mod3, which = 2, main = "Normal Q-Q")
+}
+
+```
 The final reduced model continue to show a high R-squared, while the QQ-Plot shows more points outside the reference line. At this point even the fact that now all the variables are significative the model appears to has less explanatory power as the histogram of the residuals show a more skewed behavior even though it is centered in zero.
 
-```{r,echo=FALSE}
-residuals_red   <- residuals(red.mod5)
+```{r, echo=FALSE}
+# Predict and evaluate the model on the test set
+predictions <- predict(red.mod3, newdata = data_test)
+actuals <- data_test$Home_Price_Index_log
 
-# Histogram of residuals
-par(mar = c(5.1, 4.1, 4.1, 2.1))
-par(mfrow = c(1, 2))
-{hist(residuals(red.mod5), breaks = 30, main = "Residuals Histogram Reduced Model")
-
-# Plot QQ plot and histogram for residuals
-qqnorm(residuals_red, main = "QQ Plot of Residuals", col ='blue')
-qqline(residuals_red, col = "red")}
-# They look approximately normal
+# Calculate evaluation metrics
+mse <- mean((predictions - actuals)^2)
+print(mse)
+plot(actuals,predictions)
 ```
 
-```{r,echo=FALSE}
-# Plot residuals vs fitted values
-{plot(fitted(red.mod5), residuals(red.mod5),
-     xlab = "Fitted Values", ylab = "Residuals",
-     main = "Residuals vs Fitted Values")
-abline(h = 0, col = "red")}
-```
 
-```{r,include=FALSE}
-# Do Test of normality to residuals
-
-# For all these tests, the null hypothesis H0  is that the residuals are normally distributed.
-# pvalue > 0.05 -> Fail to reject the null hypothesis, suggesting that the residuals are normally distributed.
-# Perform Shapiro-Wilk test
-shapiro_test <- shapiro.test(residuals_red)
-print(shapiro_test)
-
-# Perform Kolmogorov-Smirnov test
-ks_test <- ks.test(residuals_red, "pnorm", mean = mean(residuals_red), sd = sd(residuals_red))
-print(ks_test)
-
-# Both p-values are > 0.05, so the residuals should be normal
-
-# Check for Homoskedasticity
-{plot(fitted(red.mod5), residuals(red.mod5), main="Residuals vs Fitted")
-abline(h=0, col="red")}
-
-# Breusch-Pagan Test
-
-bptest(red.mod5)
-# P value < 0.05 -> There is Heteroskedasticiy
-
-# Multicolinearity
-
-vif(red.mod5)
-# Shipping and Industrial production could be linearly correlated
-
-
-# Model fit
-summary(red.mod5)$r.squared
-
-
-# Influential plots
-# Cook's Distance Plot
-{plot(cooks.distance(red.mod5), main="Cook's Distance")
-abline(h = 4/(nrow(data_final)-length(coef(red.mod5))), col="red")}  # Common threshold line
-
-# Leverage Plot
-{plot(hatvalues(red.mod5), main="Leverage Values")
-abline(h = 2*mean(hatvalues(red.mod5)), col="red")}  # Common threshold line
-```
 
 # Correction of the model with lagged value
+```{r}
+# Using a a lag version of the Home Price Index
+
+data_final_with_lag<- data_final
+
+data_final_with_lag$Home_Price_Index_log_lag1 <- c(NA, head(data_final$Home_Price_Index_log, -1))
+
+# Remove rows with NA values
+data_final_with_lag <- na.omit(data_final_with_lag)
+
+# Fit the linear regression model
+
+```
+
+```{r}
+# Sample data preparation
+# set.seed(123)  # For reproducibility
+# 
+# trainIndex_lag <- createDataPartition(data_final_with_lag$Home_Price_Index_log, p = .8, 
+#                                   list = FALSE, 
+#                                   times = 1)
+# data_train_lag <- data_final_with_lag[ trainIndex_lag,]
+# data_test_lag  <- data_final_with_lag[-trainIndex_lag,]
+# 
+# # Extract predictors and response
+# X_train_lag <- model.matrix(Home_Price_Index_log ~ ., data_train_lag)[, -1]  # Remove the intercept column
+# y_train_lag <- data_train_lag$Home_Price_Index_log
+# 
+# X_test_lag <- model.matrix(Home_Price_Index_log ~ ., data_test_lag)[, -1]  # Remove the intercept column
+# y_test_lag <- data_test_lag$Home_Price_Index_log
+
+# Set the seed for reproducibility
+set.seed(123)
+
+# Assuming data_final_with_lag is your dataframe and Home_Price_Index_log is your response variable
+
+# Create a sample index for training data (80% of the data)
+trainIndex_lag <- sample(seq_len(nrow(data_final_with_lag)), size = 0.8 * nrow(data_final_with_lag))
+
+# Split the data into training and testing sets
+data_train_lag <- data_final_with_lag[trainIndex_lag, ]
+data_test_lag <- data_final_with_lag[-trainIndex_lag, ]
+
+# Extract predictors and response for the training set
+X_train_lag <- model.matrix(Home_Price_Index_log ~ ., data = data_train_lag)[, -1]  # Remove the intercept column
+y_train_lag <- data_train_lag$Home_Price_Index_log
+
+# Extract predictors and response for the testing set
+X_test_lag <- model.matrix(Home_Price_Index_log ~ ., data = data_test_lag)[, -1]  # Remove the intercept column
+y_test_lag <- data_test_lag$Home_Price_Index_log
+```
 
 As we continue tosee some variability in the residuals, we decided to use a lagged version of the dependent variable as an explanatory variable. This can help to account for the lagged effects between the variables.
 
 ```{r}
-# Using a a lag version of the Home Price Index
 
-data_final$Home_Price_Index_log_lag1 <- c(NA, head(data_final$Home_Price_Index_log, -1))
-
-# Remove rows with NA values
-data_final_with_lag <- na.omit(data_final)
-
-# Fit the linear regression model
-model_lag <- lm(Home_Price_Index_log ~ Home_Price_Index_log_lag1 + Forex_Index_log + 
-                Industrial_Production_Index_log + 
-                Google_Trends_Housing_log +  
-                Interest_Rate, data = data_final_with_lag)
+model_lag <- lm(Home_Price_Index_log ~ Home_Price_Index_log_lag1 +Forex_Index_log+Industrial_Production_Index_log+Construction_Licences_Area_log+Google_Trends_Housing_log+Interest_Rate, data = data_train_lag)
 
 # Summarize the model
 summary(model_lag)
+# red.trial <- update(model_lag, . ~ . -)
+# anova(model_lag, red.trial)
+
+#We drop Unemployment,Shipping_Price 
 ```
 
 After include the lagged effect we consider the reduced model showing a high R-squared. Then we proceed to show the histogram of the residuals and their QQ plot. From the histogram it is possible to see that now the residuals show a more
 
-```{r, echo=FALSE}
-residuals_red     <- residuals(model_lag)
 
-# Histogram of residuals
-par(mar = c(5.1, 4.1, 4.1, 2.1))
-par(mfrow = c(1, 2))
-{hist(residuals(model_lag), breaks = 30, main = "Residuals Histogram Reduced Model")
+```{r,include=FALSE,fig.width=7, fig.height=4}
+# Post estimation Model 1----------------
+# See standard R plots
+{par(mfrow = c(1, 2))
 
-# Plot QQ plot and histogram for residuals
-qqnorm(residuals_red, main = "QQ Plot of Residuals", col ='blue')
-qqline(residuals_red, col = "red")}
-```
-
-```{r,echo=FALSE}
 # Plot residuals vs fitted values
-{plot(fitted(model_lag), residuals(model_lag),
-     xlab = "Fitted Values", ylab = "Residuals",
-     main = "Residuals vs Fitted Values")
-abline(h = 0, col = "red")}
+plot(model_lag, which = 1, main = "Residuals vs Fitted")
+
+# Plot QQ plot
+plot(model_lag, which = 2, main = "Normal Q-Q")
+}
+
 ```
 
-```{r,echo=FALSE}
-# 
-# # Breusch-Pagan Test
-# 
-# bptest(red.mod3)
-# # P value < 0.05 -> There is Heteroskedasticiy
-# # There seems to be homoskedasticity bc included y_1
-# 
-# 
-# # Autocorrelation plot
-# # Durbin Watson
-# dwtest(red.mod3)
-# # H0 (null hypothesis): There is no correlation among the residuals.
-# # p-value < 0.05 => reject H0, so there looks like there is serial correlation in residuals
-# 
-# # For positive serial correlation, consider adding lags of the dependent and/or independent variable to the model.
-# # For negative serial correlation, check to make sure that none of your variables are overdifferenced.
-# # For seasonal correlation, consider adding seasonal dummy variables to the model.
-# 
-# # Check type of autocorrelation
-# 
-# # Plot ACF of residuals
-#acf(residuals_red, main = "ACF of Regression Residuals")
-# 
-# # Plot PACF of residuals
-#pacf(residuals_red, main = "PACF of Regression Residuals")
-# 
-# # According to these plots, we should include the lagged y in our model
-# # to account for the ARIMA nature of the timeseries
-# 
-# 
-# # Outliers
-# std_res <- rstandard(red.mod3)
-# plot(std_res, main="Standardized Residuals")
-# abline(h=c(-2, 2), col="red")
-# 
-# # There are are 3 values of outliers
-# 
-# # Model with lagged y-------------
-# 
-# # Add lag of y to account for autocorrelation and heteroskedasticity
-# # Subset the dataframe by selecting specific columns
-# data_final <- data_reduced %>%
-#   select(y_log, y_1_log, shipping_log, fx_log,
-#          construction_licences_area_log,google_trends_log,
-#          unemployment, interest_rate)
-# 
-# 
-# model_lagged <- lm(y_log ~ ., data = data_final)  # Replace 'Y' with the dependent variable name
-# summary(model_lagged)
-# 
-# residuals_lagged    <- residuals(model_lagged)
-# # Create a histogram with more customization
-# hist(residuals_lagged, 
-#      main = "Histogram of Residuals", 
-#      xlab = "Residuals", 
-#      ylab = "Frequency", 
-#      col = "skyblue", 
-#      border = "white",
-#      breaks = 30)  # You can change the number of bins
-# 
-# 
-# # Plot QQ plot and histogram for residuals
-# qqnorm(residuals_lagged, main = "QQ Plot of Residuals", col ='blue')
-# qqline(residuals_lagged, col = "red")
-# # They look approximately normal
-# 
-# # Do Test of normality to residuals
-# 
-# # For all these tests, the null hypothesis H0  is that the residuals are normally distributed.
-# # pvalue > 0.05 -> Fail to reject the null hypothesis, suggesting that the residuals are normally distributed.
-# # Perform Shapiro-Wilk test
-# shapiro_test <- shapiro.test(residuals_lagged)
-# print(shapiro_test)
-# 
-# # Perform Kolmogorov-Smirnov test
-# ks_test <- ks.test(residuals_lagged, "pnorm", mean = mean(residuals_lagged), sd = sd(residuals_lagged))
-# print(ks_test)
-# 
-# # Both p-values are > 0.05, so the residuals should be normal
-# 
-# 
-# 
-# # Multicolinearity
-# 
-# vif(model_lagged)
-# # Shipping and Industrial production could be linearly correlated
-# 
-# 
-# # Model fit
-# summary(model_lagged)$r.squared
-# 
-# 
-# # Influential plots
-# # Cook's Distance Plot
-# plot(cooks.distance(model_lagged), main="Cook's Distance")
-# abline(h = 4/(nrow(data_final)-length(coef(model_lagged))), col="red")  # Common threshold line
-# 
-# # Leverage Plot
-# plot(hatvalues(model_lagged), main="Leverage Values")
-# abline(h = 2*mean(hatvalues(model_lagged)), col="red")  # Common threshold line
-# 
-# # Homoskedasticity
-# 
-# 
-# # Check for Homoskedasticity
-# plot(fitted(model_lagged), residuals(model_lagged), main="Residuals vs Fitted")
-# abline(h=0, col="red")
-# 
-# # Breusch-Pagan Test
-# 
-# bptest(model_lagged)
-# # P value < 0.05 -> There is Heteroskedasticiy
-# 
-# 
-# 
-# # Autocorrelation plot
-# # Durbin Watson
-# dwtest(model_lagged)
-# # H0 (null hypothesis): There is no correlation among the residuals.
-# # p-value < 0.05 => reject H0, so there looks like there is serial correlation in residuals
-# 
-# # For positive serial correlation, consider adding lags of the dependent and/or independent variable to the model.
-# # For negative serial correlation, check to make sure that none of your variables are overdifferenced.
-# # For seasonal correlation, consider adding seasonal dummy variables to the model.
-# 
-# # Check type of autocorrelation
-# 
-# # # Plot ACF of residuals
-# # acf(residuals_lagged, main = "ACF of Regression Residuals")
-# # 
-# # # Plot PACF of residuals
-# # pacf(residuals_lagged, main = "PACF of Regression Residuals")
-# 
-# # According to these plots, we should include the lagged y in our model
-# # to account for the ARIMA nature of the timeseries
-# 
-# 
-# # Outliers
-# std_res <- rstandard(model_lagged)
-# plot(std_res, main="Standardized Residuals")
-# abline(h=c(-2, 2), col="red")
+```{r, echo=FALSE}
+# Predict and evaluate the model on the test set
+predictions <- predict(model_lag, newdata = data_test_lag)
+actuals <- data_test_lag$Home_Price_Index_log
+
+# Calculate evaluation metrics
+mse <- mean((predictions - actuals)^2)
+print(mse)
+plot(actuals,predictions)
 ```
 
-This process consider the model with robust std errors, we could think in leave it or not as we did not see it on class.
 
-```{r, include=FALSE}
-# OLS Robust STD Errors--------------
-
-#install.packages("sandwich")
-#library(sandwich)
-
-#data_final <- data_reduced %>%
-#  select(y_log, shipping_log, fx_log, construction_licences_area_log,
-#         industrial_prod_log,google_trends_log,
-#         unemployment, interest_rate)
-
-#model <- lm(y_log ~ ., data = data_final)
-#summary (model)
-# Calculate robust standard errors
-#robust_se <- coeftest(model, vcov = vcovHC(model, type = "HC1"))
-
-# Display coefficients with robust standard errors
-#print(robust_se)
-
-
-# Interpretation:
-# B0: when all the covariates are 0, then y_log is 0.55,
-# which is 1.74
-# B1, A 1% increase in the shipping costs,
-# means a 0.09% increase in house prices (MoM)
-
-# Coefficients dont change that much
-
-# Postestimation is the same as red.mod3
-# Everything is the same, except the coefficients of the LM, which account for SE
-```
 
 # Forward AIC Selection
 
@@ -970,12 +816,12 @@ We Implement the forward selection based on the AIC obtained by the scores. The 
 # Forward AIC Stepwise selection-------------
 
 # Fit the null model (intercept only)
-null_model <- lm(Home_Price_Index_log ~ 1, data = data_reduced)
+null_model <- lm(Home_Price_Index_log ~ 1, data = data_train)
 
 # Specify the full model with all potential predictors
 full_model <- lm(Home_Price_Index_log ~ Industrial_Inputs_Index_log + Shipping_Price_Index_log + Forex_Index_log + Industrial_Production_Index_log + 
                    Construction_Licences_Area_log + Google_Trends_Housing_log + 
-                   Unemployment_Rate + Interest_Rate, data = data_reduced)
+                   Unemployment_Rate + Interest_Rate, data = data_train)
 
 # Perform forward selection based on AIC
 forward_model <- step(null_model, 
@@ -989,17 +835,29 @@ forward_model <- step(null_model,
 summary(forward_model)
 ```
 
-```{r,echo=FALSE}
-residuals_red     <- residuals(forward_model)
+```{r,include=FALSE,fig.width=7, fig.height=4}
+# Post estimation Model 1----------------
+# See standard R plots
+{par(mfrow = c(1, 2))
 
-# Histogram of residuals
-par(mar = c(5.1, 4.1, 4.1, 2.1))
-par(mfrow = c(1, 2))
-{hist(residuals(forward_model), breaks = 30, main = "Residuals Histogram Reduced Model")
+# Plot residuals vs fitted values
+plot(forward_model, which = 1, main = "Residuals vs Fitted")
 
-# Plot QQ plot and histogram for residuals
-qqnorm(residuals_red, main = "QQ Plot of Residuals", col ='blue')
-qqline(residuals_red, col = "red")}
+# Plot QQ plot
+plot(forward_model, which = 2, main = "Normal Q-Q")
+}
+
+```
+
+```{r, echo=FALSE}
+# Predict and evaluate the model on the test set
+predictions <- predict(forward_model, newdata = data_test)
+actuals <- data_test$Home_Price_Index_log
+
+# Calculate evaluation metrics
+mse <- mean((predictions - actuals)^2)
+print(mse)
+plot(actuals,predictions)
 ```
 
 # Backward AIC selection
@@ -1011,7 +869,7 @@ We implement the backward selection based also based in the AIC obtained by the 
 
 full_model <- lm(Home_Price_Index_log ~ Industrial_Inputs_Index_log + Shipping_Price_Index_log + Forex_Index_log + Industrial_Production_Index_log + 
                    Construction_Licences_Area_log + Google_Trends_Housing_log + 
-                   Unemployment_Rate + Interest_Rate, data = data_reduced)
+                   Unemployment_Rate + Interest_Rate, data = data_train)
 
 # Perform backward selection based on AIC
 backward_model <- step(full_model, 
@@ -1029,6 +887,23 @@ summary(backward_model)
 # So we can do the post estimation of the red.mod3, because is the same,
 # but use the coefficients of the model with robust errors for inference
 ```
+El modelo es igual al forward entonces no le hacemos nada
+
+```{r,include=FALSE,fig.width=7, fig.height=4}
+# Post estimation Model 1----------------
+# See standard R plots
+{par(mfrow = c(1, 2))
+
+# Plot residuals vs fitted values
+plot(backward_model, which = 1, main = "Residuals vs Fitted")
+
+# Plot QQ plot
+plot(backward_model, which = 2, main = "Normal Q-Q")
+}
+
+```
+
+
 
 # Lasso regresion model
 
@@ -1037,53 +912,18 @@ summary(backward_model)
 # Done over full model
 # Load the packages
 library(glmnet)
-library(caret)
-library(Metrics)
 
 
-# Subset the dataframe by selecting specific columns
-data_final <- subset(data_reduced, select = c(Home_Price_Index_log, Industrial_Inputs_Index_log, Metals_Price_Index_log,
-                                              Energy_Price_Index_log, Shipping_Price_Index_log, Forex_Index_log,
-                                              Industrial_Production_Index_log, Construction_Licences_Area_log,
-                                              Finished_Constructions, Google_Trends_Housing_log,
-                                              Unemployment_Rate, Interest_Rate))
-
-# Sample data preparation
-# Assuming your data frame is `data_final` and your response variable is `y_log`
-set.seed(123)  # For reproducibility
-trainIndex <- createDataPartition(data_final$Home_Price_Index_log, p = .8, 
-                                  list = FALSE, 
-                                  times = 1)
-data_train <- data_final[ trainIndex,]
-data_test  <- data_final[-trainIndex,]
-
-# Extract predictors and response
-X_train <- model.matrix(Home_Price_Index_log ~ ., data_train)[, -1]  # Remove the intercept column
-y_train <- data_train$Home_Price_Index_log
-
-X_test <- model.matrix(Home_Price_Index_log ~ ., data_test)[, -1]  # Remove the intercept column
-y_test <- data_test$Home_Price_Index_log
-
-# Fit linear regression model
-lm_model <- lm(Home_Price_Index_log ~ ., data = data_train)
-
-# Predict and evaluate linear regression model
-lm_predictions <- predict(lm_model, newdata = data_test)
-lm_mse <- mse(y_test, lm_predictions)
-lm_r2 <- R2(y_test, lm_predictions)
-cat("Linear Regression MSE:", lm_mse, "\n")
-cat("Linear Regression R2:", lm_r2, "\n")
 
 # Fit LASSO regression model
 lasso_model <- cv.glmnet(X_train, y_train, alpha = 1)  # alpha = 1 for LASSO
 lasso_best_lambda <- lasso_model$lambda.min
 lasso_predictions <- predict(lasso_model, s = lasso_best_lambda, newx = X_test)
-lasso_mse <- mse(y_test, lasso_predictions)
-lasso_r2 <- R2(y_test, lasso_predictions)
-
-cat("LASSO Regression MSE:", lasso_mse, "\n")
-cat("LASSO Regression R2:", lasso_r2, "\n")
+actuals <- y_test
 ```
+
+
+
 
 
 ```{r}
@@ -1094,29 +934,54 @@ print(lasso_coefficients)
 
 ```{r, echo=FALSE,fig.align='center'}
 lasso_residuals <- y_test - lasso_predictions
-# Plot predicted vs actual values
+fitted_values <- predict(lasso_model, s = lasso_best_lambda, newx = X_train)
+residuals <- y_train - fitted_values
 {
 par(mar = c(5.1, 4.1, 4.1, 2.1))
 par(mfrow = c(1, 2))
-plot(y_test, lasso_predictions, 
-     xlab = "Actual Values", ylab = "Predicted Values", 
-     main = "Predicted vs Actual Values")
-abline(0, 1, col = "red")  # Add a line y = x for reference
+# Calculate the residuals for the training set
+# Plot Residuals vs Fitted Values
+plot(fitted_values, residuals, main = "Residuals vs Fitted Values",
+     xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, col = "red")
+
 qqnorm(lasso_residuals)
 qqline(lasso_residuals, col = "red")}
 ```
 
-# Ridge regression model
-
 ```{r}
-# Fit Ridge regression model
-ridge_model <- cv.glmnet(X_train, y_train, alpha = 0)  # alpha = 0 for Ridge
+# Calculate the Mean Squared Error (MSE)
+mse <- mean((lasso_predictions - y_test)^2)
+print(paste("Mean Squared Error:", mse))
+
+# Calculate R-squared (R2)
+y_mean <- mean(y_test)
+ss_total <- sum((y_test - y_mean)^2)
+ss_residual <- sum((y_test - lasso_predictions)^2)
+r2 <- 1 - (ss_residual / ss_total)
+print(paste("R-squared:", r2))
+{
+plot(actuals,predictions)
+abline(0, 1, col = "red")}
+```
+
+
+
+
+# Ridge regression model
+```{r}
+# Regularization------------
+# Done over full model
+# Load the packages
+library(glmnet)
+
+
+
+# Fit RIDGE regression model
+ridge_model <- cv.glmnet(X_train, y_train, alpha = 0)  # alpha = 1 for LASSO
 ridge_best_lambda <- ridge_model$lambda.min
 ridge_predictions <- predict(ridge_model, s = ridge_best_lambda, newx = X_test)
-ridge_mse <- mse(y_test, ridge_predictions)
-ridge_r2 <- R2(y_test, ridge_predictions)
-cat("Ridge Regression MSE:", ridge_mse, "\n")
-cat("Ridge Regression R2:", ridge_r2, "\n")
+actuals <- y_test
 ```
 
 
@@ -1124,28 +989,41 @@ cat("Ridge Regression R2:", ridge_r2, "\n")
 # Coefficients at best lambda
 ridge_coefficients <- coef(ridge_model, s = ridge_best_lambda)
 print(ridge_coefficients)
-
 ```
+
 
 ```{r, echo=FALSE,fig.align='center'}
 ridge_residuals <- y_test - ridge_predictions
-# Plot predicted vs actual values
+fitted_values <- predict(ridge_model, s = ridge_best_lambda, newx = X_train)
+residuals <- y_train - fitted_values
 {
 par(mar = c(5.1, 4.1, 4.1, 2.1))
 par(mfrow = c(1, 2))
-plot(y_test, ridge_predictions, 
-     xlab = "Actual Values", ylab = "Predicted Values", 
-     main = "Predicted vs Actual Values")
-abline(0, 1, col = "red")  # Add a line y = x for reference
+# Calculate the residuals for the training set
+# Plot Residuals vs Fitted Values
+plot(fitted_values, residuals, main = "Residuals vs Fitted Values",
+     xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, col = "red")
+
 qqnorm(ridge_residuals)
 qqline(ridge_residuals, col = "red")}
 ```
 
+
 ```{r}
-results <- data.frame(
-  Model = c("Linear Regression", "LASSO Regression", "Ridge Regression"),
-  MSE = c(lm_mse, lasso_mse, ridge_mse),
-  R2 = c(lm_r2, lasso_r2, ridge_r2)
-)
-print(results)
+# Calculate the Mean Squared Error (MSE)
+mse <- mean((ridge_predictions - y_test)^2)
+print(paste("Mean Squared Error:", mse))
+
+# Calculate R-squared (R2)
+y_mean <- mean(y_test)
+ss_total <- sum((y_test - y_mean)^2)
+ss_residual <- sum((y_test - ridge_predictions)^2)
+r2 <- 1 - (ss_residual / ss_total)
+print(paste("R-squared:", r2))
+{
+plot(actuals,predictions)
+abline(0, 1, col = "red")}
 ```
+
+
