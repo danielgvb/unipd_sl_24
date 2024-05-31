@@ -11,7 +11,7 @@ In this project we aim to study the influence of macroeconomics indicators on th
 
 # Dataset Introduction and Preprocessing
 
-The dataset was constructed gattering information from multiple sites: the Colombian department of statistics (DANE) , the Colombian central bank (Banco de la Repúlbica), Google trends and the Federal Reserve Economic Data (FRED). In general, all the visited sites present the data as a .csv file with tables according to filters related with the time span of interest. With this we construct a consolidated database un .csv format with the following variables:
+The dataset was constructed gattering information from multiple sites: the Colombian department of statistics (DANE) , the Colombian central bank (Banco de la Repúlbica), Google trends and the Federal Reserve Economic Data (FRED). In general, all the visited sites present the data as a .csv file with tables according to filters related with the time span of interest. With this we construct a consolidated database in .csv format with the following variables:
 
 | Variable                   | Description                                                                                                    |
 |------------------------|------------------------------------------------|
@@ -227,18 +227,18 @@ for (var in colnames(select(data_reduced,-date))) {
 ```
 | Variable                      | Values                                                                                                     |
 |-------------------------------|------------------------------------------------------------------------------------------------------------|
-| Home_Price_Index              | numeric(0)                                                                                                |
-| Industrial_Inputs_Index       | numeric(0)                                                                                                |
-| Metals_Price_Index            | numeric(0)                                                                                                |
+| Home_Price_Index              | 0                                                                                                |
+| Industrial_Inputs_Index       | 0                                                                                                |
+| Metals_Price_Index            | 0                                                                                                |
 | Energy_Price_Index            | 376.4121                                                                                                  |
 | Shipping_Price_Index          | 374.969, 375.187, 395.268, 446.983, 439.181, 454.407, 468.721, 478.263, 478.216, 471.877, 469.290, 442.591, 456.584, 412.082, 409.599, 443.799, 420.694, 446.214, 462.462  |
-| Forex_Index                   | numeric(0)                                                                                                |
+| Forex_Index                   | 0                                                                                                |
 | Unemployment_Rate             | 0.1725640, 0.2048530, 0.2197200, 0.2035910, 0.2091470, 0.1744270, 0.1629280, 0.1756237                    |
-| Industrial_Production_Index   | numeric(0)                                                                                                |
+| Industrial_Production_Index   | 0                                                                                                |
 | Interest_Rate                 | 0.1141935, 0.1204839, 0.1275000, 0.1275806, 0.1300000, 0.1324194, 0.1325000, 0.1325000                    |
 | Construction_Licences_Area    | 2493085, 1988396, 2838778, 2337743, 2331210, 2859035, 2372414, 2052607                                    |
 | Finished_Constructions        | 4007432, 3762696, 1413931                                                                                 |
-| Google_Trends_Housing         | numeric(0)         
+| Google_Trends_Housing         | 0        
 
 In addition present the box plot for the variables with the highest quantity of outliers
 
