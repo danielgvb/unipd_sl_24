@@ -11,7 +11,7 @@ In this project we aim to study the influence of macroeconomics indicators on th
 
 # Dataset Introduction and Preprocessing
 
-The dataset was constructed gattering information from multiple sites: the Colombian department of statistics (DANE) , the Colombian central bank (Banco de la Repúlbica), Google trends and the Federal Reserve Economic Data (FRED). In general, all the visited sites present the data as a .csv file with tables according to filters related with the time span of interest. With this we construct a consolidated database in .csv format with the following variables:
+The dataset was constructed gattering information from multiple sites: the Colombian department of statistics (DANE) , the Colombian central bank (Banco de la República), Google trends and the Federal Reserve Economic Data (FRED). In general, all the visited sites present the data as a .csv file with tables according to filters related with the time span of interest. With this we construct a consolidated database in .csv format with the following variables:
 
 | Variable                   | Description                                                                                                    |
 |------------------------|------------------------------------------------|
@@ -28,8 +28,8 @@ The dataset was constructed gattering information from multiple sites: the Colom
 | Finished Constructions     | Measure of the total constructions that have been finished in Colombia                                         |
 | Google Trends Housing              | Google search trends on housing for Colombia                                                                   |
 
-These variables present real values,and were selected as they have an initial coherent relation with the housing sector. We present the import process of the data
-```{r}
+These variables present real values,and were selected as they have an initial coherent relation with the housing sector. Initially  We present the import process of the data
+```{r,echo=FALSE}
 #`echo = FALSE`: Hides the R code in the final document.
 #`results = 'hide'`: Hides the output of the R code.
 ```
@@ -37,7 +37,6 @@ These variables present real values,and were selected as they have an initial co
 ```{r import-data, echo=FALSE,message=FALSE, warning=FALSE}
 # Necessary libraries to run all the code chunks and plots
 library(readxl)
-library(dplyr) 
 library(car) 
 library(lmtest) 
 library(zoo)
@@ -50,41 +49,30 @@ library(caret)
 #Read the data using the read_excel function
 #Change here for current data path
 data <- read_excel("C:/Users/CAMILO/Documents/GitHub/unipd_sl_24/data/data.xlsx",sheet = "dataframe_col")
-#View(data)
-#Present the first 5 rows of the data
-#head(data,5)
 ```
 
 # Data pre-processing and cleaning
 
-After have an initial version of the data we proceed with the pre-processing and cleaning steps. As a first approximation we identify the number of NA values in each one of the columns.
+After have an initial version of the data we proceed with the pre-processing and cleaning steps. As  firs step we change the original variable names for more appropriate ones. Then we identify the number of NA values in each one of the columns.
 
 ```{r}
-
-#We first change the variables names to have more consistency 
-
-colnames(data) <- c('MY','date','Home_Price_Index','Industrial_Inputs_Index','Metals_Price_Index','Energy_Price_Index','Shipping_Price_Index','Forex_Index','Unemployment_Rate','Industrial_Production_Index','Interest_Rate','Construction_Licences_Area','Finished_Constructions','Google_Trends_Housing') 
+#change the variables names to have more consistency 
+colnames(data) <- c('MY','date','House_Price_Index','Industrial_Inputs_Index','Metals_Price_Index','Energy_Price_Index','Shipping_Price_Index','Forex_Index','Unemployment_Rate','Industrial_Production_Index','Interest_Rate','Construction_Licences_Area','Finished_Constructions','Google_Trends_Housing') 
 # Counting NA values in each column
 na_counts <- apply(data, 2, function(x) sum(is.na(x)))
 # Print the counts of NA values per column
 print(na_counts)
-
-# Construction and Industrial prod have nans, 
-# they are at the extremes 
 # Convert date column to Date type if it's not already
 data$date <- as.Date(data$date)
-
 # Copy the dataframe to avoid modifying the original one
 data_filled <- data
 ```
-We realize that the variable finished_constructions requires an additional pre-processing step because it is recorded by quarters while the other are registered by months. We propose the following reconstruction steps:
+We realize that the variable Finished_Constructions requires an additional pre-processing step because it is recorded by quarters while the others are registered by months. We propose the following reconstruction steps for those intermediate months. The idea is to take the quarterly value and divide it equally among the respective months of that quarter:
 
 ```{r}
-# Interpolate finished_constructions
 # Find the indices where the date is at the end of a trimester
 trimester_end_indices <- which(format(data$date, "%m") %in% c("03", "06", "09", "12"))
-
-# Loop through each trimester end and distribute the value to the previous three months
+# Loop through each trimester end distribute the value
 for (i in trimester_end_indices) {
   if (i - 2 > 0) {
     # Distribute the value to the current month and the previous two months
@@ -94,43 +82,30 @@ for (i in trimester_end_indices) {
     data_filled$Finished_Constructions[i - 2] <- value_to_distribute
   }
 }
-
 data_filled$Finished_Constructions <- na.locf(data_filled$Finished_Constructions, na.rm = FALSE)
-
-#View(data_filled)
 ```
 
 
 # Summary stats and final dataset
 
-We proceed to remove the left rows with NA values eliminating from the dataset the registers before January 2005, also we drop the column MY also referred to the date in form of MONTH()YEAR(). Finally, we present a summary of the dataset after these transformations. In particular we see that the Housing Price Index range present values on [87.35,203.50] with an IQR=70.38.
+We proceed to remove the left rows with NA values eliminating from the dataset the registers before January 2005. Also, we drop the column MY also referred to the date in form of MONTH()YEAR(). Finally, we present an initial summary of the dataset after these transformations. In particular we see that the House Price Index range present values on [87.35,203.50] with an IQR=70.38.
 
 ```{r}
 # Removing rows with any NA values
 clean_data <- na.omit(data_filled)
-
-# Drop columns ------------
-
+# Drop MY column
 data_reduced <- subset(clean_data, select = -c(MY))
-#head(data_reduced,10)
 ```
 
 
-```{r}
-# View description --------------
-# Get the summary of the dataframe
-summary_stats <- summary(select(data_reduced,-date))
-
-# Print the summary statistics
-#print(summary_stats)
-
-
+```{r,results = 'hide'}
+summary_stats <- summary(data_reduced[, !(names(data_reduced) %in% c("date"))])
 ```
 
 
 | Statistic    | Min    | 1st Qu. | Median | Mean   | 3rd Qu. | Max    |
 |--------------|--------|---------|--------|--------|---------|--------|
-| Home_Price_Index            | 87.35  | 110.50  | 157.92  | 147.71 | 180.88  | 203.50 |
+| House_Price_Index            | 87.35  | 110.50  | 157.92  | 147.71 | 180.88  | 203.50 |
 | Industrial_Inputs_Index     | 78.67  | 116.02  | 136.26  | 137.78 | 157.65  | 221.14 |
 | Metals_Price_Index          | 74.89  | 121.21  | 143.74  | 145.88 | 172.53  | 234.53 |
 | Energy_Price_Index          | 55.89  | 128.19  | 162.61  | 173.36 | 223.35  | 376.41 |
@@ -148,9 +123,9 @@ summary_stats <- summary(select(data_reduced,-date))
 
 # Outliers based on the IQR
 
-As an initial step to better understand the data and its behavior we find the outliers of each one of the variables using the IQR to select those points outside the bounds. As a result we found that the variables that present the most quantity of outliers are the Shipping Price Index, the Interest Rate and the Unemployment Rate.
+As an initial step to better understand the data and its behavior we find the outliers of each one of the variables using the IQR to select those points outside the bounds. As a result we found that the variables that present the most quantity of outliers are the Shipping Price Index, the Interest Rate and the Unemployment Rate. In addition, we present the boxplot of these three variables to obtain a clear summary of their distribution.  
 
-```{r}
+```{r,results = 'hide'}
 # Function to detect outliers based on IQR
 detect_outliers_single_var <- function(column) {
   column <- na.omit(column) 
@@ -159,29 +134,22 @@ detect_outliers_single_var <- function(column) {
   IQR <- Q3 - Q1
   lower_bound <- Q1 - 1.5 * IQR
   upper_bound <- Q3 + 1.5 * IQR
-  
   outliers <- column[column < lower_bound | column > upper_bound]
   return(outliers)
 }
-
 # List to store outliers for each variable
 outliers_list <- list()
-
-# Loop through each column in the dataset
-for (var in colnames(select(data_reduced,-date))) {
+# Loop to determine outliers in each column
+for (var in colnames(data_reduced[, !(names(data_reduced) %in% c("date"))])) {
   if (is.numeric(data[[var]])) {
     outliers_list[[var]] <- detect_outliers_single_var(data[[var]])
   }
 }
-
-# Print outliers for each variable
 print(outliers_list)
-
-
 ```
 | Variable                      | Values                                                                                                     |
 |-------------------------------|------------------------------------------------------------------------------------------------------------|
-| Home_Price_Index              | 0                                                                                                |
+| House_Price_Index              | 0                                                                                                |
 | Industrial_Inputs_Index       | 0                                                                                                |
 | Metals_Price_Index            | 0                                                                                                |
 | Energy_Price_Index            | 376.4121                                                                                                  |
@@ -194,54 +162,43 @@ print(outliers_list)
 | Finished_Constructions        | 4007432, 3762696, 1413931                                                                                 |
 | Google_Trends_Housing         | 0        
 
-In addition present the box plot for the variables with the highest quantity of outliers
-
 ```{r,echo = FALSE,fig.width=3, fig.height=5,fig.align='center'}
-# Create the boxplot without x-axis labels
-# Adjusting the margins: bottom, left, top, right
+#Create box plot
 {
 par(mfrow = c(3, 1), mar = c(5, 4, 2, 2) + 0.1, oma = c(0, 0, 0, 0))
 boxplot(data_reduced$Shipping_Price_Index, horizontal=TRUE  ,frame=F,main = "Shipping Price Index")
-
 boxplot(data_reduced$Unemployment_Rate, horizontal=TRUE  ,frame=F,main = "Unemployment Rate")
-
 boxplot(data_reduced$Interest_Rate, horizontal=TRUE  ,frame=F,main = "Interest Rate")
 }
 ```
 
-# Ploting the Home Price Index
+# Ploting the House Price Index
 
-Continuing with the exploratory analysis we plot the variable of Home Price Index to see its behavior through time. It is possible to see a clear increase tendency starting from the year 2005 until the year 2021, then a little decay was recorded.
+Continuing with the exploratory analysis we plot the variable of House Price Index to see its behavior through time. It is possible to see a clear increase tendency starting from the year 2005 until the year 2021, then a little decay was recorded.
 
 ```{r,echo = FALSE,fig.width=6, fig.height=4,fig.align='center'}
-# reset margins
-# Reset margins to default values
 par(mar = c(5, 4, 4, 2) + 0.1)
 par(mfrow = c(1, 1))
-
 # dependent variable
 data_reduced$category <- as.factor(clean_data$date)
 # Set up the plot without drawing the points
-{plot(1:length(data_reduced$category), clean_data$Home_Price_Index, type = "n", xaxt = "n",xlab="date", ylab = "Home Price Index", main = "Evolution of Home Prices over time",cex.axis=0.8)
-
+{plot(1:length(data_reduced$category), clean_data$House_Price_Index, type = "n", xaxt = "n",xlab="date", ylab = "House Price Index", main = "Evolution of House Prices over time",cex.axis=0.8)
 # Add the categorical labels to the x-axis
 axis(1, at = 1:length(data_reduced$category), labels = data_reduced$category)
 
 # Add the lines and points to the plot
-lines(1:length(data_reduced$category), data_reduced$Home_Price_Index, type = "o", col = "blue", pch = 16)}
+lines(1:length(data_reduced$category), data_reduced$House_Price_Index, type = "o", col = "blue", pch = 16)}
 ```
 
-# Ploting percentual variation of the Home Price Index
+# Ploting percentual variation of the House Price Index
 
-Another useful information can be found in the box plots and histograms for the percentual variations. We take the percentual variation of the variables with the intention of identify patterns and tendencies in a clearly way, considering that the majority of it is composed by index, and the study of it changes is fundamental for a complete understanding of their behavior throught time. We start with the Home Price Index variable.
+Another useful information can be found in the box plots and histograms for the percentual variations. We take the percentual variation of the variables with the intention of identify patterns and tendencies in a clearly way, considering that the majority of it is composed by index, and the study of it changes is fundamental for a complete understanding of their behavior through time. We start with the House Price Index variable.
 
-In these plots we see that the central value of the percentual variations is positive, indicating and overall increase in the Home Price Index through time. Also the negatives outliers were expected because those negatives variations due to the decrease after the 2021.In the histogram it is possible to see a right skewed behavior.
+In these plots we see that the central value of the percentual variations is positive, indicating and overall increase in the House Price Index through time. Also the negatives outliers were expected because those negatives variations due to the decrease after the 2021. In the histogram it is possible to see a right skewed behavior, give by precisely those increments until the 2021.
 
 ```{r}
-# Create Differences (Inflation)
-
 # Select subset of variables to difference
-variables_to_calculate <- c("Home_Price_Index", "Industrial_Inputs_Index", "Metals_Price_Index",
+variables_to_calculate <- c("House_Price_Index", "Industrial_Inputs_Index", "Metals_Price_Index",
                             "Energy_Price_Index", "Shipping_Price_Index", "Forex_Index",
                             "Industrial_Production_Index", "Construction_Licences_Area",
                             "Finished_Constructions", "Google_Trends_Housing")
@@ -250,16 +207,11 @@ variables_to_calculate <- c("Home_Price_Index", "Industrial_Inputs_Index", "Meta
 percentual_variation_12_months <- function(x) {
   return((x / lag(x, n = 12) - 1))
 }
-
-# Helper function to lag data
 lag <- function(x, n) {
   c(rep(NA, n), head(x, -n))
 }
-
-# Initialize the result data frame with the original data
 data_percentual_variation <- data
-
-# Apply the function to the subset of variables
+# Apply the function to the select variables
 for (var in variables_to_calculate) {
   new_var_name <- paste0("pct_var_", var)
   data_percentual_variation[[new_var_name]] <- percentual_variation_12_months(data[[var]])
@@ -270,7 +222,7 @@ for (var in variables_to_calculate) {
 ```{r,echo = FALSE,fig.width=9, fig.height=4,fig.align='center'}
 # Histograms/Boxplots of the percentual variations
 # Subset only percentual changes
-columns_to_select <- c("pct_var_Home_Price_Index", "pct_var_Industrial_Inputs_Index", "pct_var_Metals_Price_Index", 
+columns_to_select <- c("pct_var_House_Price_Index", "pct_var_Industrial_Inputs_Index", "pct_var_Metals_Price_Index", 
                        "pct_var_Energy_Price_Index", "pct_var_Shipping_Price_Index", "pct_var_Forex_Index", 
                        "pct_var_Industrial_Production_Index", "pct_var_Construction_Licences_Area", 
                        "pct_var_Finished_Constructions", "pct_var_Google_Trends_Housing", 
@@ -281,15 +233,14 @@ data_percentual_variation <- data_percentual_variation[, columns_to_select]
 data_percentual_variation$time_index<- seq(1,nrow(data_percentual_variation))
 
 
-# Y
 {
-# Set the plot parameters
+
 par(mar = c(5, 4, 4, 2) + 0.1)
 par(mfrow = c(1, 2))
 
 # Boxplot with color scale for time index
-boxplot(data_percentual_variation$pct_var_Home_Price_Index, horizontal = TRUE, frame = FALSE, 
-        main = "Boxplot of Percentual Variation Home Price Index", 
+boxplot(data_percentual_variation$pct_var_House_Price_Index, horizontal = TRUE, frame = FALSE, 
+        main = "Boxplot of Percentual Variation House Price Index", 
         ylab = "Percentual Variation", xlab = "", col = "lightgray", border = "black")
 
 # Generate color scale based on time index
@@ -297,47 +248,40 @@ colors <- colorRampPalette(c("green", "red"))(length(data_percentual_variation$t
 colored_points <- colors[rank(data_percentual_variation$time_index)]
 
 # Overlay points on the boxplot
-points(data_percentual_variation$pct_var_Home_Price_Index, rep(1, nrow(data_percentual_variation)), 
+points(data_percentual_variation$pct_var_House_Price_Index, rep(1, nrow(data_percentual_variation)), 
        col = colored_points, pch = 19)
 
 # Add a legend for the color scale
 legend("topright", legend = c("Oldest", "Newest"), 
        fill = c(colors[1], colors[length(colors)]), title = "Time Index")
 
-# Histogram of Percentual Variation Home Price Index
-hist(data_percentual_variation$pct_var_Home_Price_Index, breaks = 40, 
-     main = "Histogram of Percentual Variation Home Price Index", 
+# Histogram of Percentual Variation House Price Index
+hist(data_percentual_variation$pct_var_House_Price_Index, breaks = 40, 
+     main = "Histogram of Percentual Variation House Price Index", 
      xlab = "Percentual Variation")}
 ```
 
-We did a similar procedure for the rest of the variables with respect to their percentual variation
-
-```{r,echo = FALSE}
-
-data_percentual_variation$time_index<-NULL
-# Histograms-----------------
-par(mar = c(2, 2, 2, 2))  # Adjust margins to make them smaller
-
-# Adjust layout to fit all histograms
-par(mfrow = c(3, 5))  # Example layout; adjust if necessary
-
-# Histograms for each variable
-
+We did a similar procedure for the rest of the variables with respect to their percentual variation. For an easier interpretation we plot the histogram for the percentual variation of each variable. This plot shows that the index variables with a high variability in percentual variation are the shipping index price and the finished constructions. Also, the index variable that show less variability in the percentual variation is the one related with the industrial production.
+```{r}
+{par(mfrow = c(3,4 ), mar = c(2, 2, 2, 2) + 0.1)
+data_percentual_variation <- data_percentual_variation[, columns_to_select]
 for (i in 1:ncol(data_percentual_variation)) {
-  hist(data_percentual_variation[[i]], main = names(data_percentual_variation)[i], xlab = names(data_percentual_variation)[i], col = "blue", border = "black")
+  hist(data_percentual_variation[[i]], 
+       main = substr(names(data_percentual_variation)[i], 1, 25), # Shorten title if necessary
+       xlab = names(data_percentual_variation)[i], 
+       col = "blue", 
+       border = "black")
 }
-
+}
 ```
 
-For an easier interpretation we plot the boxplot for the percentual variation of each variable in a same graph. This plot shows that the index variables with a high variability in percentual variation are the shipping index price and the energy index price. Also, the index variable that show less variability in the percentual variation is the one related with the industrial production.
-
 ```{r,echo = FALSE,fig.width=6, fig.height=6}
-# # Reset layout
-# par(mfrow = c(1, 1))
+# This is to plot the boxplot, we dont use it becouse it requires the shape library
+#par(mfrow = c(1, 1))
 # 
-# #pairs(data_percentual_variation)
+#pairs(data_percentual_variation)
 # 
-# # Boxplot for all at once
+# #Boxplot for all at once
 # #install.packages("reshape2")
 # library(reshape2)
 # # Melt the dataframe to long format
@@ -366,7 +310,7 @@ For an easier interpretation we plot the boxplot for the percentual variation of
 
 ```
 
-We plot these four variables to see its evolution through time. It is possible to see that the industrial production Index and the Shipping price Index have an increase tendency while the energy price have a less defined behavior over time with certain peaks in specific years like 2008 and 2022
+We plot these four variables to see its evolution through time. It is possible to see that the industrial production Index and the Shipping price Index have an increase tendency, with some peaks as for example the negative peak related with the COVID pandemic for the Industrial Production Index on the 2020. In another hand, the Finished Constructions have a less defined behavior over time.
 
 ```{r,echo = FALSE,fig.width=3, fig.height=6,fig.align='center'}
 # reset margins
@@ -380,9 +324,9 @@ par(mfrow = c(3, 1))
 axis(1, at = 1:length(data_reduced$category), labels = data_reduced$category)
 lines(1:length(data_reduced$category), data_reduced$Shipping_Price_Index, type = "o", col = "blue", pch = 16)
 
-plot(1:length(data_reduced$category), clean_data$Energy_Price_Index, type = "n", xaxt = "n",xlab="date", ylab = "Energy Price Index", main = "Evolution of Energy Prices Index over time")
+plot(1:length(data_reduced$category), clean_data$Finished_Constructions, type = "n", xaxt = "n",xlab="date", ylab = "Energy Price Index", main = "Evolution of Finished constructions over time")
 axis(1, at = 1:length(data_reduced$category), labels = data_reduced$category)
-lines(1:length(data_reduced$category), data_reduced$Energy_Price_Index, type = "o", col = "blue", pch = 16)
+lines(1:length(data_reduced$category), data_reduced$Finished_Constructions, type = "o", col = "blue", pch = 16)
 
 plot(1:length(data_reduced$category), clean_data$Industrial_Production_Index, type = "n", xaxt = "n",xlab="date", ylab = "Industry Production Index", main = "Evolution of Industrial Production Index over time")
 axis(1, at = 1:length(data_reduced$category), labels = data_reduced$category)
@@ -390,74 +334,13 @@ lines(1:length(data_reduced$category), data_reduced$Industrial_Production_Index,
 }
 ```
 
-
-
-
-
-# Covariance and correlation
-
-Now we present the covariance and correlation between the variables of the dataset in order to understand the strength of their linear relation. In particular we show in the following table the result for the correlation of the variables with respect to our variable y (Housing Prices Index):
-
-| Variable                   | Correlation with Housing Prices Index |
-|----------------------------|---------------------------------------|
-| Industrial_inputs          | 0.1711                                |
-| metals                     | 0.2371                                |
-| energy                     | -0.0337                               |
-| shipping                   | 0.6810                                |
-| fx                         | 0.7599                                |
-| unemployment               | -0.0047                               |
-| industrial_prod            | 0.9418                               |
-| interest_rate              | -0.2435                               |
-| construction_licences_area | 0.2597                                |
-| finished_constructions     | 0.1519                                |
-| google_trends              | 0.9313                                |
-
-From the results we see a strong positive relationship between the house price index and the google trend one,a more moderate one with the shipping price index and the fx indicator. While the weaker relationships are found with the energy price index and the unemployment rate. These correlation serve as a point of reference for the linear regression models that we implement in the corresponding section. Also, we found a high positive correlation between the metal price index and the industrial inputs.
-
-```{r,include=FALSE}
-# Identify columns that do not contain "log"
-columns_to_keep <- !grepl("log", names(data_reduced))
-
-# Subset the dataframe to keep only these columns
-df_not_log <- data_reduced[, columns_to_keep]
-
-# Remove y_1
-#df_not_log <- subset(df_not_log, select = -y_1)
-
-# Display the filtered dataframe
-print(df_not_log)
-numeric_columns <- select_if(df_not_log, is.numeric)
-```
-
-Revisar si tiene sentido esta matris
-```{r,include=FALSE}
-cov_matrix <- cov(numeric_columns)
-cov_matrix
-```
-
-
-```{r,include=FALSE}
-correl_matrix <- cor(numeric_columns)
-correl_matrix
-# Heatmap of correl
-```
-
-
-```{r,echo=FALSE,fig.width=7, fig.height=7}
-{image(1:ncol(correl_matrix), 1:ncol(correl_matrix), correl_matrix,
-      main = "Correlation Matrix Heatmap",
-      xlab = "Variables", ylab = "Variables", axes = FALSE,
-      col = heat.colors(20))
-axis(1, at = 1:ncol(correl_matrix), labels = colnames(correl_matrix), las = 2)
-axis(2, at = 1:ncol(correl_matrix), labels = colnames(correl_matrix), las = 2)}
-```
-
 # Log-transformation
 
-We apply a log transformation with the intention of normalize the data as some variables are index that change over time and others area real values in a wide range. Our idea is to reduce the variability of the data, compressing the scale and helping to linearize those relationships between the variables for the interpretability of the results in the models. We apply log transformation to all variables except those that are already percentages: the unemployment rate and the interest rate.
+We apply a log transformation with the intention of normalize the data as some variables are index that change over time and others area real values in a wide range. Our idea is to reduce the variability of the data, compressing the scale and helping to linearize those relationships between the variables for the interpretability of the results in the subsequent models. We apply log transformation to all variables except those that are already percentages: the Unemployment Rate and the Interest Rate.
+
 ```{r}
 #Log transformation of the variables
-variables_to_log <- c("Home_Price_Index", "Industrial_Inputs_Index", "Metals_Price_Index",
+variables_to_log <- c("House_Price_Index", "Industrial_Inputs_Index", "Metals_Price_Index",
                       "Energy_Price_Index", "Shipping_Price_Index", "Forex_Index",
                       "Industrial_Production_Index", "Construction_Licences_Area",
                       "Finished_Constructions", "Google_Trends_Housing")
@@ -474,6 +357,41 @@ data_final <- data_reduced[, selected_columns]
 
 ```
 
+# Variable Correlation
+
+Now we present the  correlation between the variables of the dataset in order to understand the strength of their relation. We present the correlation matrix obtained. From the results we see a strong positive relationship between the House Price Index and the Google Trend and Industrial Production one,a more moderate correlation with the shipping Price and the Forex Index. While the weaker relationships are found with the Energy Price index and the Unemployment Rate.For the others variables, we found a high positive correlation between the metal price index and the industrial inputs.
+
+```{r,include=FALSE}
+cov_matrix <- cov(data_final)
+cov_matrix
+```
+
+
+```{r,include=FALSE}
+correl_matrix <- cor(data_final)
+correl_matrix
+print(correl_matrix)
+```
+
+```{r}
+# Plot the correlation matrix 
+
+par(mar = c(7, 7, 7, 2) + 0.1)
+cor_matrix<-correl_matrix
+image(1:ncol(cor_matrix), 1:nrow(cor_matrix), t(cor_matrix)[, ncol(cor_matrix):1], 
+      axes = FALSE, xlab = "", ylab = "", col = colorRampPalette(c("red", "white", "blue"))(20))
+
+# Add axis labels 
+axis(3, at = 1:ncol(cor_matrix), labels = colnames(cor_matrix), las = 2, cex.axis = 0.7)
+axis(2, at = 1:nrow(cor_matrix), labels = rev(rownames(cor_matrix)), las = 2, cex.axis = 0.7)
+
+#correlation coefficients
+for (i in 1:ncol(cor_matrix)) {
+  for (j in 1:nrow(cor_matrix)) {
+    text(i, nrow(cor_matrix) - j + 1, round(cor_matrix[i, j], 2), cex = 0.7)
+  }
+}
+```
 
 # Multicolinearity Check
 
@@ -481,7 +399,7 @@ Now present a multicollinearity test in top of the results related with the corr
 
 ```{r,echo=FALSE}
 # here a value bigger than 10 is supposed to have high multicolinearity 
-vif_values <-vif(lm(Home_Price_Index_log ~ ., data = data_final))
+vif_values <-vif(lm(House_Price_Index_log ~ ., data = data_final))
 vif_values
 # some variables like shipping, industrial prod, metals and industrial input are high,
 # Metals and industrial inputs are very similar / metals is a part of industrial inputs,
@@ -494,155 +412,75 @@ data_final$Metals_Price_Index_log<- NULL
 
 # re run multicoliniarity
 
-vif(lm(Home_Price_Index_log ~ ., data = data_final))
+vif(lm(House_Price_Index_log ~ ., data = data_final))
 
-# Industrial production and unemployment could be related but cant delete one at this point.
-
-# consider regularization using ridge or lasso
-# or see how it behaves without industrial inputs
-
-# Assume var_to_exclude is the name of the variable you want to exclude
-# var_to_exclude <- "industrial_inputs_log"
-# 
-# # Create a formula that excludes the specific variable
-# predictors <- setdiff(names(data_final), c("y_log", var_to_exclude))
-# formula <- as.formula(paste("y_log ~", paste(predictors, collapse = " + ")))
-# 
-# # Fit the model and calculate VIF
-# vif_values <- vif(lm(formula, data = data_final))
-# print(vif_values)
 ```
 # Train Test Split
-
+Before proceed with the linear models we apply a train test split in order to have a test set to compare the performance in a fair way between the data. For this we implement the following steps, considering that our train set will be 80% of the data: 
 ```{r}
-
-# # Sample data preparation
-# set.seed(123)  # For reproducibility
-# trainIndex <- createDataPartition(data_final$Home_Price_Index_log, p = .8, 
-#                                   list = FALSE, 
-#                                   times = 1)
-# data_train <- data_final[ trainIndex,]
-# data_test  <- data_final[-trainIndex,]
-# 
-# # Extract predictors and response
-# X_train <- model.matrix(Home_Price_Index_log ~ ., data_train)[, -1]  # Remove the intercept column
-# y_train <- data_train$Home_Price_Index_log
-# 
-# X_test <- model.matrix(Home_Price_Index_log ~ ., data_test)[, -1]  # Remove the intercept column
-# y_test <- data_test$Home_Price_Index_log
-
-# Sample data preparation
-set.seed(123)  # For reproducibility
-
-# Create a sample index for training data (80% of the data)
+set.seed(123)  
+# sample index for training data
 trainIndex <- sample(seq_len(nrow(data_final)), size = 0.8 * nrow(data_final))
-
 # Split the data into training and testing sets
 data_train <- data_final[trainIndex, ]
 data_test <- data_final[-trainIndex, ]
 
-# Extract predictors and response for the training set
-X_train <- model.matrix(Home_Price_Index_log ~ ., data = data_train)[, -1] 
-y_train <- data_train$Home_Price_Index_log
-
-# Extract predictors and response for the testing set
-X_test <- model.matrix(Home_Price_Index_log ~ ., data = data_test)[, -1] 
-y_test <- data_test$Home_Price_Index_log
+X_train <- model.matrix(House_Price_Index_log ~ ., data = data_train)[, -1] 
+y_train <- data_train$House_Price_Index_log
+X_test <- model.matrix(House_Price_Index_log ~ ., data = data_test)[, -1] 
+y_test <- data_test$House_Price_Index_log
 ```
 
 
 # Modelling the data
 
+#Initial full linear model 
 We start with a simple regression model for the data, remember that this process will be executed with the variables after the log normalization. In this first iteration we consider all the explanatory variables.
+
 
 ```{r}
 # OLS 1 Log-Log-----------------
 # Perform linear regression
-model <- lm(Home_Price_Index_log ~ ., data = data_train)  
+model <- lm(House_Price_Index_log ~ ., data = data_train)  
 summary(model)
 ```
 
-In this first model we see a high R-squared, this mean that the model is powerful in terms of explain the variance in the House Price Index, but the model is no completely satisfactory as it includes several predictors without statistical significance, and other with different degree of signifance as industrial production, google trends and interest rate. This can be explain because the R-squared statistic will always increase when more variables are added to the model.
+In this first model we see a high R-squared, this mean that the model is powerful in terms of explain the variance in the House Price Index, but the model is no completely satisfactory as it includes several predictors without statistical significance, and other with different degree of significance as industrial production, google trends and interest rate. This can be explain because the R-squared statistic will always increase when more variables are added to the model. We proceed to plot the the results for the fitted results and the QQ-plot of the residuals:
 
-```{r,include=FALSE,fig.width=7, fig.height=4}
-# Post estimation Model 1----------------
-# See standard R plots
+```{r,echo=FALSE,fig.width=7, fig.height=4}
 {par(mfrow = c(1, 2))
-
 # Plot residuals vs fitted values
 plot(model, which = 1, main = "Residuals vs Fitted")
-
 # Plot QQ plot
 plot(model, which = 2, main = "Normal Q-Q")
 }
 
 ```
 
-After having the model we fit it to evaluate its performance. First we determine the MSE which has a value of 0.001106908 suggesting the the predictions are close to the actual values, this could be observed in the plot of the predicted vs the actual values which presents an approximately 45° degrees line.
+After having the model we fit it to evaluate its performance. First we determine the MSE which has a value of 0.00269 suggesting the the predictions are close to the actual values, this could be observed in the plot of the predicted vs the actual values which presents an approximately 45° degrees line.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE,fig.width=4, fig.height=3}
 # Predict and evaluate the model on the test set
 predictions <- predict(model, newdata = data_test)
-actuals <- data_test$Home_Price_Index_log
+actuals <- data_test$House_Price_Index_log
 
-# Calculate evaluation metrics
-mse <- mean((predictions - actuals)^2)
-print(mse)
-plot(actuals,predictions)
+# Calculate evaluation metric mse
+mse_full <- mean((predictions - actuals)^2)
+print(mse_full)
+{plot(predictions, actuals, main = "Prediction vs Actual Values full model",
+     xlab = "Fitted Values", ylab = "Predictions")
+abline(0,1, col = "red")}
 ```
 
-Then we plot the residuals Histogram and QQ plot. The histogram shows an approximately normally distribution centered around zero. However, the QQ plot show some deviations outside the reference line.
 
-
-
-
-
-```{r,include=FALSE}
-# # Do Test of normality to residuals
-# 
-# # For all these tests, the null hypothesis H0  is that the residuals are normally distributed.
-# # pvalue > 0.05 -> Fail to reject the null hypothesis, suggesting that the residuals are normally distributed.
-# # Perform Shapiro-Wilk test
-# shapiro_test <- shapiro.test(residuals)
-# print(shapiro_test)
-# 
-# # Perform Kolmogorov-Smirnov test
-# ks_test <- ks.test(residuals, "pnorm", mean = mean(residuals), sd = sd(residuals))
-# print(ks_test)
-# 
-# # Both p-values are > 0.05, so the residuals should be normal
-# 
-# 
-# # Multicolinearity
-# 
-# vif(model)
-# # Shipping and Industrial production could be linearly correlated
-# 
-# 
-# # Model fit
-# summary(model)$r.squared
-# 
-# 
-# # Influential plots
-# # Cook's Distance Plot
-# {plot(cooks.distance(model), main="Cook's Distance")
-# abline(h = 4/(nrow(data_final)-length(coef(model))), col="red")}  # Common threshold line
-# 
-# # Leverage Plot
-# {plot(hatvalues(model), main="Leverage Values")
-# abline(h = 2*mean(hatvalues(model)), col="red")}  # Common threshold line
-# 
-
-```
-
-# Drop variables according to their significance
+# Model dropping variables according to their significance
 
 After the first iteration we consider the process of eliminating variables based on its significance to the model. The first variable that we consider to discard is the Energy Price Index, for this we proceed with an ANOVA F-test for the comparison of regression models. As the obtained value is 0.1328 is greater than 0.05 the Energy Price Index is not a significant predictor in the presence of the other variables. With this we remove it
 
 ```{r,echo=FALSE}
 # Variable Selection-----------
 # F-test for the comparison of nested models
-full.mod <- lm(Home_Price_Index_log ~ ., data = data_train)
+full.mod <- lm(House_Price_Index_log ~ ., data = data_train)
 summary(full.mod)
 # Remove energy
 red.mod <- update(full.mod, . ~ . -Energy_Price_Index_log)
@@ -661,20 +499,11 @@ anova(red.mod, red.mod2)
 # Can safely remove industrial inputs log
 summary(red.mod2)
 
-# Remove finished_constructions_log (only price variable so far)
+# Remove finished_constructions_log 
 red.mod3 <- update(red.mod2, . ~ . -Finished_Constructions_log)
 anova(red.mod2, red.mod3)
 # Can safely remove finished constructions (but makes no sense)
 summary(red.mod3)
-# All predictors are statistically significant
-
-#red.mod4 <- update(red.mod3, . ~ . -Construction_Licences_Area_log)
-#anova(red.mod3, red.mod4)
-# Can safely remove constructions_licences_area_log
-#summary(red.mod4)
-
-
-# All predictors are statistically significant
 ```
 
 ```{r,echo=FALSE}
@@ -683,9 +512,8 @@ summary(red.mod3)
 
 
 
-```{r,include=FALSE,fig.width=7, fig.height=4}
-# Post estimation Model 1----------------
-# See standard R plots
+```{r,echo=FALSE,fig.width=7, fig.height=4}
+
 {par(mfrow = c(1, 2))
 
 # Plot residuals vs fitted values
@@ -696,92 +524,70 @@ plot(red.mod3, which = 2, main = "Normal Q-Q")
 }
 
 ```
-The final reduced model continue to show a high R-squared, while the QQ-Plot shows more points outside the reference line. At this point even the fact that now all the variables are significative the model appears to has less explanatory power as the histogram of the residuals show a more skewed behavior even though it is centered in zero.
+The final reduced model continue to show a high R-squared, while the QQ-Plot shows similar points outside the reference line. At this point even the fact that now all the variables are significative the model appears to has more or less the same explanatory power due to the residuals behaviour.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE,fig.width=4, fig.height=3}
 # Predict and evaluate the model on the test set
 predictions <- predict(red.mod3, newdata = data_test)
-actuals <- data_test$Home_Price_Index_log
+actuals <- data_test$House_Price_Index_log
 
-# Calculate evaluation metrics
-mse <- mean((predictions - actuals)^2)
-print(mse)
-plot(actuals,predictions)
+# Calculate evaluation metric mse
+mse_red <- mean((predictions - actuals)^2)
+print(mse_red)
+{plot(predictions, actuals, main = "Prediction vs Actual Values significance",
+     xlab = "Fitted Values", ylab = "Predictions")
+abline(0,1, col = "red")}
 ```
-
 
 
 # Correction of the model with lagged value
+
+As a following step we implement a procedure to consider a lag version of the House Price Index, this due to the possible influence of lagged affects, in terms of the intuition that the actual house price index will not be determined by the current explanatory variables, but by the explanatory variables of the previous period. 
 ```{r}
-# Using a a lag version of the Home Price Index
+# Using a a lag version of the House Price Index
 
 data_final_with_lag<- data_final
 
-data_final_with_lag$Home_Price_Index_log_lag1 <- c(NA, head(data_final$Home_Price_Index_log, -1))
+data_final_with_lag$House_Price_Index_log_lag1 <- c(NA, head(data_final$House_Price_Index_log, -1))
 
-# Remove rows with NA values
 data_final_with_lag <- na.omit(data_final_with_lag)
 
-# Fit the linear regression model
 
 ```
 
 ```{r}
-# Sample data preparation
-# set.seed(123)  # For reproducibility
-# 
-# trainIndex_lag <- createDataPartition(data_final_with_lag$Home_Price_Index_log, p = .8, 
-#                                   list = FALSE, 
-#                                   times = 1)
-# data_train_lag <- data_final_with_lag[ trainIndex_lag,]
-# data_test_lag  <- data_final_with_lag[-trainIndex_lag,]
-# 
-# # Extract predictors and response
-# X_train_lag <- model.matrix(Home_Price_Index_log ~ ., data_train_lag)[, -1]  # Remove the intercept column
-# y_train_lag <- data_train_lag$Home_Price_Index_log
-# 
-# X_test_lag <- model.matrix(Home_Price_Index_log ~ ., data_test_lag)[, -1]  # Remove the intercept column
-# y_test_lag <- data_test_lag$Home_Price_Index_log
 
 # Set the seed for reproducibility
 set.seed(123)
 
-# Assuming data_final_with_lag is your dataframe and Home_Price_Index_log is your response variable
-
-# Create a sample index for training data (80% of the data)
 trainIndex_lag <- sample(seq_len(nrow(data_final_with_lag)), size = 0.8 * nrow(data_final_with_lag))
 
 # Split the data into training and testing sets
 data_train_lag <- data_final_with_lag[trainIndex_lag, ]
 data_test_lag <- data_final_with_lag[-trainIndex_lag, ]
 
-# Extract predictors and response for the training set
-X_train_lag <- model.matrix(Home_Price_Index_log ~ ., data = data_train_lag)[, -1]  # Remove the intercept column
-y_train_lag <- data_train_lag$Home_Price_Index_log
 
-# Extract predictors and response for the testing set
-X_test_lag <- model.matrix(Home_Price_Index_log ~ ., data = data_test_lag)[, -1]  # Remove the intercept column
-y_test_lag <- data_test_lag$Home_Price_Index_log
+X_train_lag <- model.matrix(House_Price_Index_log ~ ., data = data_train_lag)[, -1] 
+y_train_lag <- data_train_lag$House_Price_Index_log
+
+
+X_test_lag <- model.matrix(House_Price_Index_log ~ ., data = data_test_lag)[, -1]  
+y_test_lag <- data_test_lag$House_Price_Index_log
 ```
-
-As we continue tosee some variability in the residuals, we decided to use a lagged version of the dependent variable as an explanatory variable. This can help to account for the lagged effects between the variables.
 
 ```{r}
 
-model_lag <- lm(Home_Price_Index_log ~ Home_Price_Index_log_lag1 +Forex_Index_log+Industrial_Production_Index_log+Construction_Licences_Area_log+Google_Trends_Housing_log+Interest_Rate, data = data_train_lag)
+model_lag <- lm(House_Price_Index_log ~ House_Price_Index_log_lag1 +Forex_Index_log+Industrial_Production_Index_log+Construction_Licences_Area_log+Google_Trends_Housing_log+Interest_Rate, data = data_train_lag)
 
 # Summarize the model
 summary(model_lag)
-# red.trial <- update(model_lag, . ~ . -)
-# anova(model_lag, red.trial)
 
-#We drop Unemployment,Shipping_Price 
 ```
 
-After include the lagged effect we consider the reduced model showing a high R-squared. Then we proceed to show the histogram of the residuals and their QQ plot. From the histogram it is possible to see that now the residuals show a more
+After include the lagged effect we consider the reduced model showing a high R-squared. Then we proceed to show the histogram of the residuals and their QQ plot. From the QQ-plot it is possible to see that now the residuals show a even strong normal behavior
 
 
-```{r,include=FALSE,fig.width=7, fig.height=4}
+```{r,echo=FALSE,fig.width=7, fig.height=4}
 # Post estimation Model 1----------------
 # See standard R plots
 {par(mfrow = c(1, 2))
@@ -795,20 +601,23 @@ plot(model_lag, which = 2, main = "Normal Q-Q")
 
 ```
 
-```{r, echo=FALSE}
-# Predict and evaluate the model on the test set
-predictions <- predict(model_lag, newdata = data_test_lag)
-actuals <- data_test_lag$Home_Price_Index_log
+Now, it is possible to see that the fit of the predictions and actual values is more correct, in terms that it follows almost a a perfect straight line.  
 
-# Calculate evaluation metrics
-mse <- mean((predictions - actuals)^2)
-print(mse)
-plot(actuals,predictions)
+```{r, echo=FALSE,,fig.width=4, fig.height=3}
+predictions <- predict(model_lag, newdata = data_test_lag)
+actuals <- data_test_lag$House_Price_Index_log
+
+# Calculate evaluation metric mse
+mse_lag <- mean((predictions - actuals)^2)
+print(mse_lag)
+{plot(predictions, actuals, main = "Prediction vs Actual Values lagged model",
+     xlab = "Fitted Values", ylab = "Predictions")
+abline(0,1, col = "red")}
 ```
 
 
 
-# Forward AIC Selection
+# Forward AIC Selection model
 
 We Implement the forward selection based on the AIC obtained by the scores. The AIC approach allows a model comparison with the intention to find a good balance between the model fit and the complexity. The process of forward selection stars with no predictors and adding one by one. In thes case we have a no significative predictor the Industrial Inputs Index, this happens because with the AIC criterion is possible to obtain non-significant predictors if their inclusion improves the general performance of the model.
 
@@ -816,10 +625,10 @@ We Implement the forward selection based on the AIC obtained by the scores. The 
 # Forward AIC Stepwise selection-------------
 
 # Fit the null model (intercept only)
-null_model <- lm(Home_Price_Index_log ~ 1, data = data_train)
+null_model <- lm(House_Price_Index_log ~ 1, data = data_train)
 
 # Specify the full model with all potential predictors
-full_model <- lm(Home_Price_Index_log ~ Industrial_Inputs_Index_log + Shipping_Price_Index_log + Forex_Index_log + Industrial_Production_Index_log + 
+full_model <- lm(House_Price_Index_log ~ Industrial_Inputs_Index_log + Shipping_Price_Index_log + Forex_Index_log + Industrial_Production_Index_log + 
                    Construction_Licences_Area_log + Google_Trends_Housing_log + 
                    Unemployment_Rate + Interest_Rate, data = data_train)
 
@@ -835,7 +644,7 @@ forward_model <- step(null_model,
 summary(forward_model)
 ```
 
-```{r,include=FALSE,fig.width=7, fig.height=4}
+```{r,echo=FALSE,fig.width=7, fig.height=4}
 # Post estimation Model 1----------------
 # See standard R plots
 {par(mfrow = c(1, 2))
@@ -849,25 +658,27 @@ plot(forward_model, which = 2, main = "Normal Q-Q")
 
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE,,fig.width=4, fig.height=3}
 # Predict and evaluate the model on the test set
 predictions <- predict(forward_model, newdata = data_test)
-actuals <- data_test$Home_Price_Index_log
+actuals <- data_test$House_Price_Index_log
 
-# Calculate evaluation metrics
-mse <- mean((predictions - actuals)^2)
-print(mse)
-plot(actuals,predictions)
+# Calculate evaluation metric mse
+mse_forward <- mean((predictions - actuals)^2)
+print(mse_forward)
+{plot(predictions, actuals, main = "Prediction vs Actual Values Forward Seelction",
+     xlab = "Fitted Values", ylab = "Predictions")
+abline(0,1, col = "red")}
 ```
 
-# Backward AIC selection
+# Backward AIC selection model
 
 We implement the backward selection based also based in the AIC obtained by the different models. In this case, contrary to forward selection, all the variables left were in the reduced model obtained by leaving only the most significative variables. so for this case the results are the same obtained before.
 
 ```{r,results='hide'}
 # Backward AIC Stepwise selection-------------
 
-full_model <- lm(Home_Price_Index_log ~ Industrial_Inputs_Index_log + Shipping_Price_Index_log + Forex_Index_log + Industrial_Production_Index_log + 
+full_model <- lm(House_Price_Index_log ~ Industrial_Inputs_Index_log + Shipping_Price_Index_log + Forex_Index_log + Industrial_Production_Index_log + 
                    Construction_Licences_Area_log + Google_Trends_Housing_log + 
                    Unemployment_Rate + Interest_Rate, data = data_train)
 
@@ -880,16 +691,10 @@ backward_model <- step(full_model,
 ```{r,echo=FALSE}
 # Display the summary of the selected model
 summary(backward_model)
-
-# Backward gives construction licences, which is good
-
-# Overall the models converge to this last model (removing by p-value), stepwise...
-# So we can do the post estimation of the red.mod3, because is the same,
-# but use the coefficients of the model with robust errors for inference
 ```
-El modelo es igual al forward entonces no le hacemos nada
 
-```{r,include=FALSE,fig.width=7, fig.height=4}
+
+```{r,echo=FALSE,fig.width=7, fig.height=4}
 # Post estimation Model 1----------------
 # See standard R plots
 {par(mfrow = c(1, 2))
@@ -907,13 +712,11 @@ plot(backward_model, which = 2, main = "Normal Q-Q")
 
 # Lasso regresion model
 
+As another approach we decide to implement the lasso regression model. This with the intention of get a model that shrink the coefficients of the model helping to reduce the overfitting, and with the intention of see if some coefficients of the explanatory variables are setting to zero.For this, we use a cross validation in order to train the model   
+
 ```{r}
-# Regularization------------
-# Done over full model
-# Load the packages
+
 library(glmnet)
-
-
 
 # Fit LASSO regression model
 lasso_model <- cv.glmnet(X_train, y_train, alpha = 1)  # alpha = 1 for LASSO
@@ -921,18 +724,14 @@ lasso_best_lambda <- lasso_model$lambda.min
 lasso_predictions <- predict(lasso_model, s = lasso_best_lambda, newx = X_test)
 actuals <- y_test
 ```
-
-
-
-
-
+We get the lasso coefficients, it is possible to see that no one was corrected to zero, but some of them get a way smaller coefficient, indicating a lower influence over the House Price Index, as for example the Finished constructions and the Energy Price Index. 
 ```{r}
 # Coefficients at best lambda
 lasso_coefficients <- coef(lasso_model, s = lasso_best_lambda)
 print(lasso_coefficients)
 ```
 
-```{r, echo=FALSE,fig.align='center'}
+```{r, echo=FALSE,fig.align='center',fig.width=7, fig.height=4}
 lasso_residuals <- y_test - lasso_predictions
 fitted_values <- predict(lasso_model, s = lasso_best_lambda, newx = X_train)
 residuals <- y_train - fitted_values
@@ -949,10 +748,10 @@ qqnorm(lasso_residuals)
 qqline(lasso_residuals, col = "red")}
 ```
 
-```{r}
+```{r,fig.width=4, fig.height=3}
 # Calculate the Mean Squared Error (MSE)
-mse <- mean((lasso_predictions - y_test)^2)
-print(paste("Mean Squared Error:", mse))
+mse_lasso <- mean((lasso_predictions - y_test)^2)
+print(paste("Mean Squared Error:", mse_lasso))
 
 # Calculate R-squared (R2)
 y_mean <- mean(y_test)
@@ -961,14 +760,15 @@ ss_residual <- sum((y_test - lasso_predictions)^2)
 r2 <- 1 - (ss_residual / ss_total)
 print(paste("R-squared:", r2))
 {
-plot(actuals,predictions)
+plot(actuals,predictions,main = "Prediction vs Actual Values lasso",
+     xlab = "Fitted Values", ylab = "Predictions")
 abline(0, 1, col = "red")}
 ```
-
-
-
-
 # Ridge regression model
+
+We apply a similar procedure for the ridge regression to see if we get a different model with respecto to lasso, as it uses a different regularization term. We rpesent the results.  
+
+
 ```{r}
 # Regularization------------
 # Done over full model
@@ -990,9 +790,8 @@ actuals <- y_test
 ridge_coefficients <- coef(ridge_model, s = ridge_best_lambda)
 print(ridge_coefficients)
 ```
-
-
-```{r, echo=FALSE,fig.align='center'}
+In general we get a different results for the coefficients with ridge. It is possible to see that some of them change drastically as for example the one for the Unemployment Rate that with lasso have a postie high value, but with ridge we obtain a negative small one.
+```{r, echo=FALSE,fig.align='center',fig.width=7, fig.height=4}
 ridge_residuals <- y_test - ridge_predictions
 fitted_values <- predict(ridge_model, s = ridge_best_lambda, newx = X_train)
 residuals <- y_train - fitted_values
@@ -1010,10 +809,10 @@ qqline(ridge_residuals, col = "red")}
 ```
 
 
-```{r}
+```{r,,fig.width=4, fig.height=3}
 # Calculate the Mean Squared Error (MSE)
-mse <- mean((ridge_predictions - y_test)^2)
-print(paste("Mean Squared Error:", mse))
+mse_ridge <- mean((ridge_predictions - y_test)^2)
+print(paste("Mean Squared Error:", mse_ridge))
 
 # Calculate R-squared (R2)
 y_mean <- mean(y_test)
@@ -1022,8 +821,21 @@ ss_residual <- sum((y_test - ridge_predictions)^2)
 r2 <- 1 - (ss_residual / ss_total)
 print(paste("R-squared:", r2))
 {
-plot(actuals,predictions)
+plot(actuals,predictions,main = "Prediction vs Actual Values Ridge",
+     xlab = "Fitted Values", ylab = "Predictions")
 abline(0, 1, col = "red")}
 ```
+#MSE Model comparison
 
 
+| Variable  | Value |
+|-----------|-------|
+| mse_full | 1.867e-3    |
+| mse_red | 1.830e-3    |
+| mse_lag | 0.0231e-3    |
+| mse_forward | 1.830e-3    |
+| mse_backward | 1.830e-3    |
+| mse_lasso | 1.832e-3    |
+| mse_ridge | 2.096e-3    |
+
+It is possible to see that the best model in terms of MSE is the one using the lag variable. With respect to the others, the majority of them give a similar value for the coefficients of the explanatory variables. In general the reduce model obtainind only with the significative variables, and the ones implemented selection based on the AIC perform in a similar way. And the lasso and ridge get a similar result with ridge getting a sligth gigher MSE. 
