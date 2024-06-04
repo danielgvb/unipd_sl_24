@@ -620,7 +620,7 @@ abline(0,1, col = "red")}
 
 # Forward AIC Selection model
 
-We Implement the forward selection based on the AIC obtained by the scores. The AIC approach allows a model comparison with the intention to find a good balance between the model fit and the complexity. The process of forward selection stars with no predictors and adding one by one. In thes case we have a no significative predictor the Industrial Inputs Index, this happens because with the AIC criterion is possible to obtain non-significant predictors if their inclusion improves the general performance of the model.
+We Implement the forward selection based on the AIC for each model. The AIC approach allows a model comparison with the intention to find a good balance between model fit and complexity. The process of forward selection stars with no predictors (just with the bias) and adds one by one each of the covariates in the cured dataframe. In this case we have a no significative predictor the Industrial Inputs Index, this happens because with the AIC criterion is possible to obtain non-significant predictors if their inclusion improves the general performance of the model.
 
 ```{r,results='hide'}
 # Forward AIC Stepwise selection-------------
