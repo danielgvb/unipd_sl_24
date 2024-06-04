@@ -1,6 +1,9 @@
 ---
 title: "statistical_project"
-output: pdf_document
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 date: "2024-05-27"
 Authors: Daniel Gutierrez, Rafael Hernandez, Camilo Sanabria
 ---
@@ -525,7 +528,7 @@ plot(red.mod3, which = 2, main = "Normal Q-Q")
 }
 
 ```
-The final reduced model continue to show a high R-squared, while the QQ-Plot shows similar points outside the reference line. At this point even the fact that now all the variables are statistically significant, the model appears to has more or less the same explanatory power due to the residuals behaviour.
+The final reduced model continue to show a high R-squared, while the QQ-Plot shows similar points outside the reference line. At this point even the fact that now all the variables are statistically significant, the model appears to has more or less the same explanatory power due to the residuals behavior.
 
 ```{r, echo=FALSE,fig.width=4, fig.height=3}
 # Predict and evaluate the model on the test set
@@ -541,9 +544,9 @@ abline(0,1, col = "red")}
 ```
 
 
-# Correction of the model with lagged value
+# Model with lagged variable
 
-As a following step we implement a procedure to consider a lag version of the House Price Index, this due to the possible influence of lagged affects, in terms of the intuition that the actual house price index will not be determined by the current explanatory variables, but by the explanatory variables of the previous period. Research conducted by Iacoviello, Matteo (2004) suggests that the house prices can be modeled with a VAR approach, which considers lags of both the dependent variable and the covariates. We include so far only the dependent variable due to the modelling approach in this written (Linear Regression Analysis).
+As a following step we implement a procedure to consider a lag version of the House Price Index, this due to the possible influence of lagged affects, in terms of the intuition that the actual house price index will not be determined by the current explanatory variables, but by the explanatory variables of the previous period. Research conducted by Iacoviello, Matteo (2004) suggests that the house prices can be modeled with a VAR approach, which considers lags of both the dependent variable and the covariates. We include so far only the dependent variable due to the modelling approach in this written (Linear Regression Analysis). Unemployment Rate was discarded because its coefficient showed no evidence of being different from zero, and via the ANOVA analysis it could be concluded that it was safe to discard it.
 ```{r}
 # Using a a lag version of the House Price Index
 
@@ -620,7 +623,7 @@ abline(0,1, col = "red")}
 
 # Forward AIC Selection model
 
-We Implement the forward selection based on the AIC for each model. The AIC approach allows a model comparison with the intention to find a good balance between model fit and complexity. The process of forward selection stars with no predictors (just with the bias) and adds one by one each of the covariates in the cured dataframe. In this case we have a no significative predictor the Industrial Inputs Index, this happens because with the AIC criterion is possible to obtain non-significant predictors if their inclusion improves the general performance of the model.
+We Implement the forward selection based on the AIC for a family of models. The AIC approach allows a model comparison with the aim to find a good balance between model fit and complexity. The process of forward selection starts with no predictors (just with the bias) and adds one by one each of the covariates from the pre-cured dataframe. We could see variables with no statistical evidence of significance using this approach. This happens because via the AIC forward selection method is possible to obtain  non-significant coefficients for a given set of variables but their inclusion minimizes the AIC.
 
 ```{r,results='hide'}
 # Forward AIC Stepwise selection-------------
@@ -674,7 +677,7 @@ abline(0,1, col = "red")}
 
 # Backward AIC selection model
 
-We implement the backward selection based also based in the AIC obtained by the different models. In this case, contrary to forward selection, all the variables left were in the reduced model obtained by leaving only the most significative variables. so for this case the results are the same obtained before.
+We also implemented backward selection based on the AIC obtained from various models. We start from the full model then variables are removed based on the AIC. As a result, the outcomes matched those previously obtained in the forward selection approach.
 
 ```{r,results='hide'}
 # Backward AIC Stepwise selection-------------
@@ -713,7 +716,7 @@ plot(backward_model, which = 2, main = "Normal Q-Q")
 
 # Lasso regresion model
 
-As another approach we decide to implement the lasso regression model. This with the intention of get a model that shrink the coefficients of the model helping to reduce the overfitting, and with the intention of see if some coefficients of the explanatory variables are setting to zero.For this, we use a cross validation in order to train the model   
+As an alternative approach, we decided to implement the Lasso regression model. Our goal is to obtain a model that shrinks the coefficients of the variables, thereby reducing overfitting. Another aim is to evaluate whether some coefficients of the explanatory variables are set to zero. To achieve this, we use cross-validation to train the model.  
 
 ```{r}
 
@@ -725,7 +728,7 @@ lasso_best_lambda <- lasso_model$lambda.min
 lasso_predictions <- predict(lasso_model, s = lasso_best_lambda, newx = X_test)
 actuals <- y_test
 ```
-We get the lasso coefficients, it is possible to see that no one was corrected to zero, but some of them get a way smaller coefficient, indicating a lower influence over the House Price Index, as for example the Finished constructions and the Energy Price Index. 
+We obtained the Lasso coefficients and observed that none were shrunk to zero. However, some coefficients were significantly reduced, indicating a lower influence on the House Price Index. For example, the coefficients for Finished Constructions and the Energy Price Index were notably shrunk by this regularization technique.
 ```{r}
 # Coefficients at best lambda
 lasso_coefficients <- coef(lasso_model, s = lasso_best_lambda)
@@ -767,19 +770,15 @@ abline(0, 1, col = "red")}
 ```
 # Ridge regression model
 
-We apply a similar procedure for the ridge regression to see if we get a different model with respecto to lasso, as it uses a different regularization term. We rpesent the results.  
+We applied a similar procedure for Ridge regression to assess whether it produces a different model compared to Lasso, given its distinct regularization term. The results are presented above:
 
 
 ```{r}
 # Regularization------------
 # Done over full model
-# Load the packages
-library(glmnet)
-
-
 
 # Fit RIDGE regression model
-ridge_model <- cv.glmnet(X_train, y_train, alpha = 0)  # alpha = 1 for LASSO
+ridge_model <- cv.glmnet(X_train, y_train, alpha = 0)  # alpha = 0 for Ridge
 ridge_best_lambda <- ridge_model$lambda.min
 ridge_predictions <- predict(ridge_model, s = ridge_best_lambda, newx = X_test)
 actuals <- y_test
@@ -791,7 +790,7 @@ actuals <- y_test
 ridge_coefficients <- coef(ridge_model, s = ridge_best_lambda)
 print(ridge_coefficients)
 ```
-In general we get a different results for the coefficients with ridge. It is possible to see that some of them change drastically as for example the one for the Unemployment Rate that with lasso have a postie high value, but with ridge we obtain a negative small one.
+In general we get a different results for the coefficients with Ridge. It is possible to see that some of them change drastically as for example the one for the Unemployment Rate.In the Lasso approach Unemployment Rate has a positive high value, while with Ridge we obtained a negative small one. According to economic theory, the sign of Unemployment should be negative, because as Unemployment goes up, there should be less available income for the families, reducing the demand for new homes, thus having a negative impact on the final price of new homes. So the Ridge coefficient makes more sense.
 ```{r, echo=FALSE,fig.align='center',fig.width=7, fig.height=4}
 ridge_residuals <- y_test - ridge_predictions
 fitted_values <- predict(ridge_model, s = ridge_best_lambda, newx = X_train)
@@ -839,4 +838,20 @@ abline(0, 1, col = "red")}
 | mse_lasso | 1.832e-3    |
 | mse_ridge | 2.096e-3    |
 
-It is possible to see that the best model in terms of MSE is the one using the lag variable. With respect to the others, the majority of them give a similar value for the coefficients of the explanatory variables. In general the reduce model obtainind only with the significative variables, and the ones implemented selection based on the AIC perform in a similar way. And the lasso and ridge get a similar result with ridge getting a sligth gigher MSE. 
+
+It is evident that the best model in terms of MSE is the one using the lagged dependent variable as a predictor. Compared to the others, most models provide similar values for the coefficients of the explanatory variables. In general, the reduced model obtained with only the statistically significant variables and the one implemented using AIC-based selection perform similarly. The Lasso and Ridge regularization techniques yield similar results, with Ridge having a slightly higher MSE but more reasonable signs for its coefficients.
+
+
+# Statistical Inference - Best Model
+
+
+Based on the model with the lowest MSE, we now proceed to interpret the coefficients of the covariates. All variables have a p-value indicating statistical significance at least at the 5% level. The log-transformation of the variables that were not percentages is handy as it allows us to interpret the log-log effects as the impact of a 1% increase in variable X on the House Price Index by B%.
+
+In this model, the variable with the highest coefficient is the lagged House Price Index. This aligns with the economic theory of price stickiness and the inflationary spiral. A 1% increase in the House Price Index results in a 0.96% increase for the next month, indicating high inflationary persistence. It is important to note that durable goods tend to have stickier prices. The second coefficient we observe is for Forex, showing that a 1% increase in the foreign exchange rate reduces the House Price Index by 0.009%. This coefficient is almost negligible, which makes sense since the instantaneous effect on house prices is minimal.
+
+Next, we observe the Industrial Production Index, where a 1% increase results in a 0.03% increase in the House Price Index. This makes sense as a more dynamic economy typically leads to higher demand for housing, thus increasing prices. For the Construction Licenses Area, a 1% increase results in a 0.003% decrease in the House Price Index. This aligns with economic theory, where an increase in available housing area should lead to an increase in supply, thereby reducing prices.
+
+The Google Trends Index shows an effect of 0.008%, indicating that the intention to buy a house, or at least the related searches, positively impacts the dependent variable. This is notable because this indicator can be obtained in real time, unlike the others and can help predict the direction of housing prices in advance. Lastly, for the Interest Rate, a 1% increase leads to a 0.07% decrease in prices. This is because higher interest rates make consumers less likely to take on credit, thereby reducing the demand for new houses and consequently lowering prices.
+
+For further studies, different lags for the explanatory variables could be added to determine which have the most impact on the House Price Index. While this is beyond the scope of this report, it could be useful for government policy-making based on statistical evidence. This way, housing prices can be managed more effectively, contributing to the long-term wealth of the population.
+
