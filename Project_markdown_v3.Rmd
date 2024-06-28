@@ -1,9 +1,9 @@
 ---
 title: "statistical_project"
 output:
-  pdf_document: default
   html_document:
     df_print: paged
+  pdf_document: default
 date: "2024-05-27"
 Authors: Daniel Gutierrez, Rafael Hernandez, Camilo Sanabria
 ---
@@ -43,7 +43,6 @@ library(readxl)
 library(car) 
 library(lmtest) 
 library(zoo)
-#library(caret)
 ```
 
 # Data Uploading
@@ -180,22 +179,13 @@ plot.new()
 ```
 
 
-```{r,echo = FALSE,fig.width=3, fig.height=4,fig.align='center'}
-#Create box plot
-{
-par(mfrow = c(3, 1), mar = c(5, 4, 2, 2) + 0.1, oma = c(0, 0, 0, 0))
-boxplot(data_reduced$Shipping_Price_Index, horizontal=TRUE  ,frame=F,main = "Shipping Price Index")
-boxplot(data_reduced$Unemployment_Rate, horizontal=TRUE  ,frame=F,main = "Unemployment Rate")
-boxplot(data_reduced$Interest_Rate, horizontal=TRUE  ,frame=F,main = "Interest Rate")
-}
-```
 The outlier data for the shipping index, unemployment, and interest rates all relate to the COVID-19 shock. The shipping index crisis in mid-2022 resulted from the COVID-19 lockdowns (2020-2021), economic reactivation, and delays in Chinese and Western ports. The unemployment outliers are due to the initial COVID lockdown in Colombia and the ensuing economic shock. The high interest rates stem from the Colombian Central Bank's efforts to control inflation starting in 2021.
 
 # Ploting the House Price Index
 
 Continuing with the exploratory analysis we plot the variable of House Price Index to see its behavior through time. It is possible to see a clear increase tendency starting from the year 2005 until the year 2021, then a little decay was recorded.
 
-```{r,echo = FALSE,fig.width=6, fig.height=4,fig.align='center'}
+```{r,echo = FALSE,fig.width=6, fig.height=3.5,fig.align='center'}
 par(mar = c(5, 4, 4, 2) + 0.1)
 par(mfrow = c(1, 1))
 # dependent variable
@@ -238,7 +228,7 @@ for (var in variables_to_calculate) {
 
 ```
 
-```{r,echo = FALSE,fig.width=9, fig.height=4,fig.align='center'}
+```{r,echo = FALSE,fig.width=9, fig.height=3.5,fig.align='center'}
 # Histograms/Boxplots of the percentual variations
 # Subset only percentual changes
 columns_to_select <- c("pct_var_House_Price_Index", "pct_var_Industrial_Inputs_Index", "pct_var_Metals_Price_Index", 
@@ -294,64 +284,45 @@ for (i in 1:ncol(data_percentual_variation)) {
 }
 ```
 
-```{r,echo = FALSE,fig.width=6, fig.height=6}
-# This is to plot the boxplot, we dont use it becouse it requires the shape library
-#par(mfrow = c(1, 1))
-# 
-#pairs(data_percentual_variation)
-# 
-# #Boxplot for all at once
-# #install.packages("reshape2")
-# library(reshape2)
-# # Melt the dataframe to long format
-# # Melt the dataframe to long format
-# data_long <- melt(data_percentual_variation)
-# 
-# # Adjust graphical parameters
-# 
-# 
-# # Create the boxplot without x-axis labels
-# {par(mar = c(5, 5, 4, 2) + 0.1)  
-#   boxplot(value ~ variable, data = data_long,
-#         main = "Boxplot of Multiple Variables",
-#         xlab = "", ylab = "Value",
-#         col = "lightblue", border = "darkblue", xaxt = 'n')
-# 
-# # Add custom x-axis labels at a 45-degree angle
-# labels <- levels(data_long$variable)
-# text(x = 1:length(labels), y = par("usr")[3] - 0.5, labels = labels, srt = 45, adj = 1, xpd = TRUE, cex = 0.8)
-# }
-# 
-# # Reset graphical parameters to default
-# #par(mar = c(5, 4, 4, 2) + 0.1)
-# # This one goes in the report, not so much variability in prices even a lot in X vars
-# 
-
-```
 
 We plot these four variables to see its evolution through time. It is possible to see that the industrial production Index and the Shipping price Index have an increase tendency, with some peaks as for example the negative peak related with the COVID pandemic for the Industrial Production Index on the 2020. In another hand, the Finished Constructions have a less defined behavior over time.
 
-```{r,echo = FALSE,fig.width=3, fig.height=6,fig.align='center'}
+
+```{r,echo = FALSE,fig.width=8.5, fig.height=5,fig.align='center'}
+
 # reset margins
 
 # dependent variable
 data_reduced$category <- as.factor(clean_data$date)
-# Set up the plot without drawing the points
-{par(mar = c(5.1, 4.1, 4.1, 2.1))
-par(mfrow = c(3, 1))
-  plot(1:length(data_reduced$category), clean_data$Shipping_Price_Index, type = "n", xaxt = "n",xlab="date", ylab = "Shipping Price Index", main = "Evolution of Shipping Prices Index over time")
+# Reset margins
+par(mar = c(5.1, 4.1, 4.1, 2.1))
+
+# Set up a 2x2 plotting space
+{par(mfrow = c(2, 2))
+
+# First plot: Evolution of Shipping Prices Index over time
+plot(1:length(data_reduced$category), clean_data$Shipping_Price_Index, type = "n", xaxt = "n",
+     xlab = "date", ylab = "Shipping Price Index", main = "Evolution of Shipping Prices Index over time")
 axis(1, at = 1:length(data_reduced$category), labels = data_reduced$category)
 lines(1:length(data_reduced$category), data_reduced$Shipping_Price_Index, type = "o", col = "blue", pch = 16)
 
-plot(1:length(data_reduced$category), clean_data$Finished_Constructions, type = "n", xaxt = "n",xlab="date", ylab = "Energy Price Index", main = "Evolution of Finished constructions over time")
+# Second plot: Evolution of Finished constructions over time
+plot(1:length(data_reduced$category), clean_data$Finished_Constructions, type = "n", xaxt = "n",
+     xlab = "date", ylab = "Energy Price Index", main = "Evolution of Finished constructions over time")
 axis(1, at = 1:length(data_reduced$category), labels = data_reduced$category)
 lines(1:length(data_reduced$category), data_reduced$Finished_Constructions, type = "o", col = "blue", pch = 16)
 
-plot(1:length(data_reduced$category), clean_data$Industrial_Production_Index, type = "n", xaxt = "n",xlab="date", ylab = "Industry Production Index", main = "Evolution of Industrial Production Index over time")
+# Third plot: Evolution of Industrial Production Index over time
+plot(1:length(data_reduced$category), clean_data$Industrial_Production_Index, type = "n", xaxt = "n",
+     xlab = "date", ylab = "Industry Production Index", main = "Evolution of Industrial Production Index over time")
 axis(1, at = 1:length(data_reduced$category), labels = data_reduced$category)
 lines(1:length(data_reduced$category), data_reduced$Industrial_Production_Index, type = "o", col = "blue", pch = 16)
-}
+
+# Fourth plot: Blank space
+plot.new()}
+
 ```
+
 
 # Log-transformation
 
@@ -466,7 +437,7 @@ summary(model)
 
 In this first model we see a high R-squared, this mean that the model is powerful in terms of explain the variability in the House Price Index, but the model is no completely satisfactory as it includes several predictors without statistical significance, and other with different degree of significance as Industrial Production Index, Google Trends Housing and Interest Rate. This can be explain because the R-squared statistic will always increase when more variables are added to the model. We proceed to plot the the results for the fitted results and the QQ-plot of the residuals:
 
-```{r,echo=FALSE,fig.width=7, fig.height=4}
+```{r,echo=FALSE,fig.width=7, fig.height=3.5}
 {par(mfrow = c(1, 2))
 # Plot residuals vs fitted values
 plot(model, which = 1, main = "Residuals vs Fitted")
@@ -531,7 +502,7 @@ summary(red.mod3)
 
 
 
-```{r,echo=FALSE,fig.width=7, fig.height=4}
+```{r,echo=FALSE,fig.width=7, fig.height=3.5}
 
 {par(mfrow = c(1, 2))
 
@@ -606,7 +577,7 @@ summary(model_lag)
 After include the lagged effect we consider the reduced model showing a high R-squared. Then we proceed to show the histogram of the residuals and their QQ plot. From the QQ-plot it is possible to see that now the residuals show a even strong normal behavior
 
 
-```{r,echo=FALSE,fig.width=7, fig.height=4}
+```{r,echo=FALSE,fig.width=7, fig.height=3.5}
 # Post estimation Model 1----------------
 # See standard R plots
 {par(mfrow = c(1, 2))
@@ -663,7 +634,7 @@ forward_model <- step(null_model,
 summary(forward_model)
 ```
 
-```{r,echo=FALSE,fig.width=7, fig.height=4}
+```{r,echo=FALSE,fig.width=7, fig.height=3.5}
 # Post estimation Model 1----------------
 # See standard R plots
 {par(mfrow = c(1, 2))
@@ -713,7 +684,7 @@ summary(backward_model)
 ```
 
 
-```{r,echo=FALSE,fig.width=7, fig.height=4}
+```{r,echo=FALSE,fig.width=7, fig.height=3.5}
 # Post estimation Model 1----------------
 # See standard R plots
 {par(mfrow = c(1, 2))
@@ -750,7 +721,7 @@ lasso_coefficients <- coef(lasso_model, s = lasso_best_lambda)
 print(lasso_coefficients)
 ```
 
-```{r, echo=FALSE,fig.align='center',fig.width=7, fig.height=4}
+```{r, echo=FALSE,fig.align='center',fig.width=7, fig.height=3.5}
 lasso_residuals <- y_test - lasso_predictions
 fitted_values <- predict(lasso_model, s = lasso_best_lambda, newx = X_train)
 residuals <- y_train - fitted_values
@@ -806,7 +777,7 @@ ridge_coefficients <- coef(ridge_model, s = ridge_best_lambda)
 print(ridge_coefficients)
 ```
 In general we get a different results for the coefficients with Ridge. It is possible to see that some of them change drastically as for example the one for the Unemployment Rate.In the Lasso approach Unemployment Rate has a positive high value, while with Ridge we obtained a negative small one. According to economic theory, the sign of Unemployment should be negative, because as Unemployment goes up, there should be less available income for the families, reducing the demand for new homes, thus having a negative impact on the final price of new homes. So the Ridge coefficient makes more sense.
-```{r, echo=FALSE,fig.align='center',fig.width=7, fig.height=4}
+```{r, echo=FALSE,fig.align='center',fig.width=7, fig.height=3.5}
 ridge_residuals <- y_test - ridge_predictions
 fitted_values <- predict(ridge_model, s = ridge_best_lambda, newx = X_train)
 residuals <- y_train - fitted_values
