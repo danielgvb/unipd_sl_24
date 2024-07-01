@@ -1,11 +1,9 @@
 ---
 title: "statistical_project"
-output:
-  html_document:
-    df_print: paged
-  pdf_document: default
 date: "2024-05-27"
-Authors: Daniel Gutierrez, Rafael Hernandez, Camilo Sanabria
+geometry: margin=2cm
+output: pdf_document
+authors: "Daniel Gutierrez, Rafael Hernandez, Camilo Sanabria"
 ---
 
 # Project Introduction
@@ -185,7 +183,7 @@ The outlier data for the shipping index, unemployment, and interest rates all re
 
 Continuing with the exploratory analysis we plot the variable of House Price Index to see its behavior through time. It is possible to see a clear increase tendency starting from the year 2005 until the year 2021, then a little decay was recorded.
 
-```{r,echo = FALSE,fig.width=6, fig.height=3.5,fig.align='center'}
+```{r,echo = FALSE,fig.width=5, fig.height=3,fig.align='center'}
 par(mar = c(5, 4, 4, 2) + 0.1)
 par(mfrow = c(1, 1))
 # dependent variable
@@ -279,7 +277,8 @@ for (i in 1:ncol(data_percentual_variation)) {
        main = substr(names(data_percentual_variation)[i], 1, 25), # Shorten title if necessary
        xlab = names(data_percentual_variation)[i], 
        col = "blue", 
-       border = "black")
+       border = "black",
+       cex.main=0.7)
 }
 }
 ```
@@ -382,7 +381,6 @@ for (i in 1:ncol(cor_matrix)) {
   }
 }}
 ```
-
 # Multicolinearity Check
 
 Now present a multicollinearity test in top of the results related with the correlation of the variables in relation with the dependent variable of House Price Index. We first calculate the VIF for each predictor variable. We found that some variables like Shipping, Industrial Production Index, Metals Price Index and Industrial Inputs present a high VIF. 
@@ -424,7 +422,7 @@ y_test <- data_test$House_Price_Index_log
 
 # Modelling the data
 
-#Initial full linear model 
+# Initial full linear model 
 We start with a simple regression model for the data, remember that this process will be executed with the variables after the log normalization. In this first iteration we consider all the explanatory variables.
 
 
@@ -437,12 +435,12 @@ summary(model)
 
 In this first model we see a high R-squared, this mean that the model is powerful in terms of explain the variability in the House Price Index, but the model is no completely satisfactory as it includes several predictors without statistical significance, and other with different degree of significance as Industrial Production Index, Google Trends Housing and Interest Rate. This can be explain because the R-squared statistic will always increase when more variables are added to the model. We proceed to plot the the results for the fitted results and the QQ-plot of the residuals:
 
-```{r,echo=FALSE,fig.width=7, fig.height=3.5}
+```{r,echo=FALSE,fig.width=6.2, fig.height=3}
 {par(mfrow = c(1, 2))
 # Plot residuals vs fitted values
-plot(model, which = 1, main = "Residuals vs Fitted")
+plot(model, which = 1, main = "Residuals vs Fitted",cex.main=0.8)
 # Plot QQ plot
-plot(model, which = 2, main = "Normal Q-Q")
+plot(model, which = 2, main = "Normal Q-Q",cex.main=0.8)
 }
 
 ```
@@ -502,15 +500,15 @@ summary(red.mod3)
 
 
 
-```{r,echo=FALSE,fig.width=7, fig.height=3.5}
+```{r,echo=FALSE,fig.width=6.2, fig.height=3}
 
 {par(mfrow = c(1, 2))
 
 # Plot residuals vs fitted values
-plot(red.mod3, which = 1, main = "Residuals vs Fitted")
+plot(red.mod3, which = 1, main = "Residuals vs Fitted",cex.main=0.8)
 
 # Plot QQ plot
-plot(red.mod3, which = 2, main = "Normal Q-Q")
+plot(red.mod3, which = 2, main = "Normal Q-Q",cex.main=0.8)
 }
 
 ```
@@ -577,16 +575,16 @@ summary(model_lag)
 After include the lagged effect we consider the reduced model showing a high R-squared. Then we proceed to show the histogram of the residuals and their QQ plot. From the QQ-plot it is possible to see that now the residuals show a even strong normal behavior
 
 
-```{r,echo=FALSE,fig.width=7, fig.height=3.5}
+```{r,echo=FALSE,fig.width=6.2, fig.height=3}
 # Post estimation Model 1----------------
 # See standard R plots
 {par(mfrow = c(1, 2))
 
 # Plot residuals vs fitted values
-plot(model_lag, which = 1, main = "Residuals vs Fitted")
+plot(model_lag, which = 1, main = "Residuals vs Fitted",cex.main=0.8)
 
 # Plot QQ plot
-plot(model_lag, which = 2, main = "Normal Q-Q")
+plot(model_lag, which = 2, main = "Normal Q-Q",cex.main=0.8)
 }
 
 ```
@@ -634,16 +632,16 @@ forward_model <- step(null_model,
 summary(forward_model)
 ```
 
-```{r,echo=FALSE,fig.width=7, fig.height=3.5}
+```{r,echo=FALSE,fig.width=6.2, fig.height=3}
 # Post estimation Model 1----------------
 # See standard R plots
 {par(mfrow = c(1, 2))
 
 # Plot residuals vs fitted values
-plot(forward_model, which = 1, main = "Residuals vs Fitted")
+plot(forward_model, which = 1, main = "Residuals vs Fitted",cex.main=0.8)
 
 # Plot QQ plot
-plot(forward_model, which = 2, main = "Normal Q-Q")
+plot(forward_model, which = 2, main = "Normal Q-Q",cex.main=0.8)
 }
 
 ```
@@ -684,23 +682,23 @@ summary(backward_model)
 ```
 
 
-```{r,echo=FALSE,fig.width=7, fig.height=3.5}
+```{r,echo=FALSE,fig.width=6.2, fig.height=3}
 # Post estimation Model 1----------------
 # See standard R plots
 {par(mfrow = c(1, 2))
 
 # Plot residuals vs fitted values
-plot(backward_model, which = 1, main = "Residuals vs Fitted")
+plot(backward_model, which = 1, main = "Residuals vs Fitted",cex.main=0.8)
 
 # Plot QQ plot
-plot(backward_model, which = 2, main = "Normal Q-Q")
+plot(backward_model, which = 2, main = "Normal Q-Q",cex.main=0.8)
 }
 
 ```
 
 
 
-# Lasso regresion model
+# Lasso regression model
 
 As an alternative approach, we decided to implement the Lasso regression model. Our goal is to obtain a model that shrinks the coefficients of the variables, thereby reducing overfitting. Another aim is to evaluate whether some coefficients of the explanatory variables are set to zero. To achieve this, we use cross-validation to train the model.  
 
@@ -754,6 +752,8 @@ plot(actuals,predictions,main = "Prediction vs Actual Values lasso",
      xlab = "Fitted Values", ylab = "Predictions")
 abline(0, 1, col = "red")}
 ```
+
+
 # Ridge regression model
 
 We applied a similar procedure for Ridge regression to assess whether it produces a different model compared to Lasso, given its distinct regularization term. The results are presented above:
@@ -811,7 +811,11 @@ plot(actuals,predictions,main = "Prediction vs Actual Values Ridge",
      xlab = "Fitted Values", ylab = "Predictions")
 abline(0, 1, col = "red")}
 ```
-#MSE Model comparison
+
+
+
+
+# MSE Model comparison
 
 
 | Variable  | Value |
@@ -840,4 +844,18 @@ Next, we observe the Industrial Production Index, where a 1% increase results in
 The Google Trends Index shows an effect of 0.008%, indicating that the intention to buy a house, or at least the related searches, positively impacts the dependent variable. This is notable because this indicator can be obtained in real time, unlike the others and can help predict the direction of housing prices in advance. Lastly, for the Interest Rate, a 1% increase leads to a 0.07% decrease in prices. This is because higher interest rates make consumers less likely to take on credit, thereby reducing the demand for new houses and consequently lowering prices.
 
 For further studies, different lags for the explanatory variables could be added to determine which have the most impact on the House Price Index. While this is beyond the scope of this report, it could be useful for government policy-making based on statistical evidence. This way, housing prices can be managed more effectively, contributing to the long-term wealth of the population.
+
+# References
+
+Banco de la República: https://www.banrep.gov.co/
+
+Departamento Administrativo Nacional de Estadística: https://www.dane.gov.co/
+
+Google trends: https://trends.google.com/
+
+Federal Reserve Economic data: https://fred.stlouisfed.org/
+
+Cámara Colombiana de Contrucción: https://camacol.co/informacion-economica
+
+
 
